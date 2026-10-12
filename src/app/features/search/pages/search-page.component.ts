@@ -57,6 +57,10 @@ export class SearchPageComponent implements OnDestroy {
       );
     });
   }
+  selectTab(tab: "publications" | "analysis") {
+    this.activeTab.set(tab);
+    this.vm.setAnalysisVisible(tab === "analysis");
+  }
   search(query: Pick<Criteria, "q" | "mode">) {
     this.navigate({ ...this.vm.criteria(), ...query });
   }

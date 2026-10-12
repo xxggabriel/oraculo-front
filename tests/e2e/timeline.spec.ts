@@ -27,6 +27,12 @@ test("timeline: processo próprio, datas, publicação atual e navegação prese
   ]);
   const section = page.locator("#timeline-publications");
   await expect(section.locator(".timeline-entry")).toHaveCount(4);
+  await expect(section.locator(".timeline-entry").first()).toContainText(
+    "Partes e polo destinatário não informados.",
+  );
+  await expect(section.locator(".timeline-entry").first()).toContainText(
+    "Advogados não informados.",
+  );
   await expect(section.locator('[aria-current="true"]')).toContainText(
     "Você está nesta publicação",
   );

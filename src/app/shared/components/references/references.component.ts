@@ -3,7 +3,14 @@ import {
   visibleReferenceParts,
 } from "../publication-content/content-decorations";
 import { PublicationContentComponent } from "../publication-content/publication-content.component";
-import { Component, computed, input, output } from "@angular/core";
+import {
+  Component,
+  computed,
+  input,
+  linkedSignal,
+  output,
+} from "@angular/core";
+import { LoadingSkeletonComponent } from "../loading-skeleton/loading-skeleton.component";
 import { Reference } from "../../../core/search";
 import { presentReference, referenceExcerpt } from "./reference-presentation";
 import { EvidenceListComponent } from "../evidence/evidence-list.component";
@@ -17,12 +24,17 @@ import {
 @Component({
   selector: "app-publication-references",
   standalone: true,
-  imports: [EvidenceListComponent, PublicationContentComponent],
+  imports: [
+    EvidenceListComponent,
+    PublicationContentComponent,
+    LoadingSkeletonComponent,
+  ],
   host: { class: "block min-w-0" },
   templateUrl: "./references.component.html",
 })
 export class PublicationReferencesComponent {
   readonly references = input.required<readonly Reference[]>();
+  readonly loading = input(false);
   readonly text = input.required<string>();
   readonly identity = input.required<TextIdentity>();
   readonly baseHref = input("");
@@ -39,6 +51,29 @@ export class PublicationReferencesComponent {
   readonly uniqueReferences = computed(() =>
     uniqueReferences(this.references()),
   );
+  private readonly requestedCount = linkedSignal(() => {
+    this.references();
+    this.identity();
+    return 5;
+  });
+  readonly visibleCount = computed(() => {
+    const activeIndex = this.uniqueReferences().findIndex(
+      (reference) => this.referenceAnchor(reference) === this.activeReference(),
+    );
+    const activePageCount =
+      activeIndex < 5 ? 5 : 5 + Math.ceil((activeIndex + 1 - 5) / 10) * 10;
+    return Math.max(this.requestedCount(), activePageCount);
+  });
+  readonly visibleReferences = computed(() =>
+    this.uniqueReferences().slice(0, this.visibleCount()),
+  );
+  readonly remainingCount = computed(
+    () => this.uniqueReferences().length - this.visibleReferences().length,
+  );
+  readonly nextCount = computed(() => Math.min(10, this.remainingCount()));
+  showMore() {
+    this.requestedCount.set(this.visibleCount() + 10);
+  }
   private readonly segments = computed(() =>
     referenceSegments(
       this.text(),

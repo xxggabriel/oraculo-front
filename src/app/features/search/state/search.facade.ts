@@ -27,6 +27,8 @@ export class SearchFacade implements OnDestroy {
   readonly pageNumber = signal(1);
   readonly hasPrevious = signal(false);
   private version = 0;
+  private analysisRequested = false;
+  private analysisVisible = false;
   private controller: AbortController | null = null;
   private readonly capabilityController = new AbortController();
   private cursors: (string | null)[] = [];
@@ -73,28 +75,8 @@ export class SearchFacade implements OnDestroy {
     this.analysis.set(null);
     this.analysisError.set(null);
     this.facetError.set(null);
-    this.analysisLoading.set(true);
-    void this.research
-      .facets(criteria, signal)
-      .then((f) => {
-        if (version === this.version) this.facets.set(f);
-      })
-      .catch((e) => {
-        if (version === this.version && !signal.aborted)
-          this.facetError.set(this.failure(e));
-      });
-    void this.research
-      .analyze(criteria, signal)
-      .then((a) => {
-        if (version === this.version) this.analysis.set(a);
-      })
-      .catch((e) => {
-        if (version === this.version && !signal.aborted)
-          this.analysisError.set(this.failure(e));
-      })
-      .finally(() => {
-        if (version === this.version) this.analysisLoading.set(false);
-      });
+    this.analysisRequested = false;
+    this.analysisLoading.set(false);
     try {
       const page = await this.research.search(criteria, null, signal, pageSize);
       if (version !== this.version) {
@@ -105,11 +87,49 @@ export class SearchFacade implements OnDestroy {
       this.session = page.sessionId;
       this.cursors = [null];
       this.page.set(page);
+      this.loadFacets(criteria, signal, version);
+      if (this.analysisVisible) void this.loadAnalysis();
     } catch (e) {
       if (version === this.version && !signal.aborted)
         this.error.set(this.failure(e));
     } finally {
       if (version === this.version) this.loading.set(false);
+    }
+  }
+  private loadFacets(criteria: Criteria, signal: AbortSignal, version: number) {
+    void this.research
+      .facets(criteria, signal)
+      .then((f) => {
+        if (version === this.version && !signal.aborted) this.facets.set(f);
+      })
+      .catch((e) => {
+        if (version === this.version && !signal.aborted)
+          this.facetError.set(this.failure(e));
+      });
+  }
+  setAnalysisVisible(visible: boolean) {
+    this.analysisVisible = visible;
+    if (visible && this.page()) void this.loadAnalysis();
+  }
+  private async loadAnalysis(): Promise<void> {
+    const controller = this.controller;
+    if (!controller || this.analysisRequested) return;
+    const version = this.version;
+    const signal = controller.signal;
+    this.analysisRequested = true;
+    this.analysisLoading.set(true);
+    this.analysisError.set(null);
+    try {
+      const analysis = await this.research.analyze(this.criteria(), signal);
+      if (version === this.version && !signal.aborted)
+        this.analysis.set(analysis);
+    } catch (e) {
+      if (version === this.version && !signal.aborted) {
+        this.analysisError.set(this.failure(e));
+        this.analysisRequested = false;
+      }
+    } finally {
+      if (version === this.version) this.analysisLoading.set(false);
     }
   }
   async next(): Promise<void> {
@@ -149,6 +169,7 @@ export class SearchFacade implements OnDestroy {
       this.page.set(page);
       this.pageNumber.set(index + 1);
       this.hasPrevious.set(index > 0);
+      if (this.analysisVisible) void this.loadAnalysis();
     } catch (e) {
       if (version === this.version && !controller.signal.aborted)
         this.error.set(this.failure(e));

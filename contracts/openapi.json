@@ -2677,7 +2677,7 @@
             "type": "array",
             "maxItems": 20,
             "items": {
-              "$ref": "#/components/schemas/Summary"
+              "$ref": "#/components/schemas/TimelineItem"
             }
           },
           "page": {
@@ -2974,6 +2974,231 @@
           "classes",
           "missingClassCode",
           "missingClassName"
+        ]
+      },
+      "TimelineRecipient": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pole": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "pole"
+        ]
+      },
+      "TimelineAttorney": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "oabNumber": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "oabState": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "oabNumber",
+          "oabState"
+        ]
+      },
+      "TimelineItem": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "revisionId": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "textVersionId": {
+            "type": "string",
+            "maxLength": 512
+          },
+          "court": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "documentType": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "publicationDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "availabilityDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sourceDate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "processes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 20
+            },
+            "maxItems": 1024
+          },
+          "snippets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Snippet"
+            },
+            "maxItems": 2
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recipients": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TimelineRecipient"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "attorneys": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TimelineAttorney"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sourceDocumentType": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Tipo de documento literal informado pela fonte em extensions.tipoDocumento; distinto do tipo de comunicação."
+          }
+        },
+        "required": [
+          "id",
+          "revisionId",
+          "textVersionId",
+          "court",
+          "documentType",
+          "publicationDate",
+          "availabilityDate",
+          "sourceDate",
+          "processes",
+          "snippets",
+          "score"
         ]
       }
     }

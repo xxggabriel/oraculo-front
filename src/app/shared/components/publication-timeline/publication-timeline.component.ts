@@ -1,22 +1,26 @@
-import { publicationPlainText } from "../publication-content/publication-html";
+import { LoadingSkeletonComponent } from "../loading-skeleton/loading-skeleton.component";
 import { Component, input, output } from "@angular/core";
 import { Params, RouterLink } from "@angular/router";
-import { PublicationTimeline } from "../../../core/publication-timeline";
-import { Publication, SearchFailure } from "../../../core/search";
+import {
+  PublicationTimeline,
+  TimelinePublication,
+} from "../../../core/publication-timeline";
+import { SearchFailure } from "../../../core/search";
 import { civilDate, number, processNumber } from "../../format";
 @Component({
   selector: "app-publication-timeline",
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, LoadingSkeletonComponent],
   host: { class: "block min-w-0" },
   templateUrl: "./publication-timeline.component.html",
 })
 export class PublicationTimelineComponent {
   readonly report = input<PublicationTimeline | null>(null);
-  readonly publications = input<readonly Publication[]>([]);
+  readonly publications = input<readonly TimelinePublication[]>([]);
   readonly currentPublication = input.required<string>();
   readonly selectedProcess = input<string | null>(null);
   readonly loading = input(false);
+  readonly hasMore = input(false);
   readonly error = input<SearchFailure | null>(null);
   readonly queryParams = input<Params>({});
   readonly idPrefix = input("timeline");
@@ -32,12 +36,19 @@ export class PublicationTimelineComponent {
   itemId(id: string) {
     return `${this.idPrefix()}-item-${encodeURIComponent(id)}`;
   }
-  excerpt(publication: Publication) {
-    const source =
-      publication.snippets[0]?.map((part) => part.text).join("") ?? "";
-    const text = publicationPlainText(source).replace(/\s+/g, " ").trim();
-    const points = Array.from(text);
-    return points.slice(0, 240).join("") + (points.length > 240 ? "…" : "");
+  poleLabel(pole: string | null) {
+    if (!pole?.trim()) return "Polo não informado";
+    const value = pole.trim().toUpperCase();
+    switch (value) {
+      case "A":
+      case "ATIVO":
+        return "Polo ativo";
+      case "P":
+      case "PASSIVO":
+        return "Polo passivo";
+      default:
+        return `Polo informado: ${pole}`;
+    }
   }
   select(event: Event) {
     this.selectProcess.emit((event.target as HTMLSelectElement).value);

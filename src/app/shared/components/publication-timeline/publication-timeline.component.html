@@ -88,9 +88,7 @@
     </div>
   }
   @if (loading() && !publications().length) {
-    <p class="py-6 text-sm text-muted" role="status">
-      Carregando publicações do processo…
-    </p>
+    <app-loading-skeleton label="Carregando publicações do processo…" />
   }
   @if (
     !loading() &&
@@ -145,20 +143,45 @@
               class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted"
             >
               <span>{{ publication.court ?? "Tribunal não informado" }}</span>
-              <span>{{ publication.type ?? "Tipo não informado" }}</span>
+              <span
+                >Tipo de documento:
+                {{ publication.sourceDocumentType ?? "Não informado" }}</span
+              >
               @if (publication.id === currentPublication()) {
                 <span class="font-semibold text-brand-700"
                   >Você está nesta publicação</span
                 >
               }
             </div>
-            @if (excerpt(publication); as snippet) {
-              <p
-                class="mt-3 line-clamp-3 text-sm leading-6 text-ink [overflow-wrap:anywhere]"
-              >
-                {{ snippet }}
-              </p>
-            }
+            <div
+              class="mt-3 space-y-2 text-sm leading-6 [overflow-wrap:anywhere]"
+            >
+              <p class="font-medium">Partes destinatárias</p>
+              @for (recipient of publication.recipients ?? []; track $index) {
+                <p>
+                  {{ recipient.name || "Nome não informado" }} ·
+                  {{ poleLabel(recipient.pole) }}
+                </p>
+              } @empty {
+                <p class="text-muted">
+                  Partes e polo destinatário não informados.
+                </p>
+              }
+              <p class="font-medium">Advogados destinatários</p>
+              @for (attorney of publication.attorneys ?? []; track $index) {
+                <p>
+                  {{ attorney.name || "Nome não informado" }} ·
+                  @if (attorney.oabNumber || attorney.oabState) {
+                    OAB {{ attorney.oabState || "UF não informada" }} /
+                    {{ attorney.oabNumber || "Número não informado" }}
+                  } @else {
+                    OAB não informada
+                  }
+                </p>
+              } @empty {
+                <p class="text-muted">Advogados não informados.</p>
+              }
+            </div>
             @if (publication.id !== currentPublication()) {
               <a
                 [routerLink]="['/publicacoes', publication.id]"
@@ -179,14 +202,17 @@
       }
     </ol>
   }
-  @if (report()?.hasMore && !error()) {
+  @if (loading() && publications().length) {
+    <app-loading-skeleton label="Carregando mais publicações…" [count]="2" />
+  }
+  @if (hasMore() && !error()) {
     <button
       type="button"
       [disabled]="loading()"
       (click)="loadMore.emit()"
       class="mt-6 min-h-11 rounded-lg border border-brand-600 px-5 py-2 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-50 disabled:opacity-50"
     >
-      {{ loading() ? "Carregando…" : "Carregar mais publicações" }}
+      {{ loading() ? "Carregando…" : "Mostrar mais 10 publicações" }}
     </button>
   }
   @if (report()?.truncated) {

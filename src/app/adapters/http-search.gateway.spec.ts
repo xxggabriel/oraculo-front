@@ -366,6 +366,28 @@ describe("Contrato da timeline do processo", () => {
     );
     expect(result.publications.map((p) => p.id)).toEqual(["a", "b"]);
   });
+  it("preserva destinatários, polos e OAB no modelo próprio da timeline", async () => {
+    const data = response();
+    Object.assign(data.items[0], {
+      recipients: [{ name: "Ána", pole: "A" }],
+      attorneys: [{ name: "Érica", oabNumber: "00123-A", oabState: "GO" }],
+    });
+    const transport = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(JSON.stringify(data)));
+    const result = await new HttpSearchGateway("/api/v1", transport).timeline(
+      "source",
+      query,
+      new AbortController().signal,
+    );
+    expect(result.publications[0].recipients).toEqual([
+      { name: "Ána", pole: "A" },
+    ]);
+    expect(result.publications[0].attorneys).toEqual([
+      { name: "Érica", oabNumber: "00123-A", oabState: "GO" },
+    ]);
+    expect(result.publications[1].recipients).toBeNull();
+  });
   it.each(["source", "page", "process", "order", "duplicate"])(
     "rejeita resposta semanticamente inválida: %s",
     async (kind) => {

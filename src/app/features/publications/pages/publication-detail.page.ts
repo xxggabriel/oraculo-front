@@ -13,6 +13,7 @@ import { RelatedPublications } from "../../../core/related-publications";
 import { PublicationDetail, SearchFailure } from "../../../core/search";
 import { ReferenceNavigation } from "../../../shared/components/publication-text/reference-segments";
 import { DOCUMENT } from "@angular/common";
+import { LoadingSkeletonComponent } from "../../../shared/components/loading-skeleton/loading-skeleton.component";
 import { PublicationTextComponent } from "../../../shared/components/publication-text/publication-text.component";
 import { PublicationReferencesComponent } from "../../../shared/components/references/references.component";
 import { SelectedOutputsComponent } from "../../../shared/components/selected-outputs/selected-outputs.component";
@@ -27,6 +28,7 @@ import { PublicationMetadataComponent } from "../../../shared/components/publica
   standalone: true,
   imports: [
     RouterLink,
+    LoadingSkeletonComponent,
     PublicationTextComponent,
     PublicationReferencesComponent,
     SelectedOutputsComponent,
@@ -110,6 +112,7 @@ export class PublicationDetailPage implements OnDestroy {
     try {
       const detail = await this.research.detail(id, signal);
       if (generation === this.generation) {
+        this.activeReference.set(this.route.snapshot.fragment ?? null);
         this.detail.set(detail);
         void this.loadRelated(detail.publication.id, generation);
         void this.timeline.load(detail.publication.id);

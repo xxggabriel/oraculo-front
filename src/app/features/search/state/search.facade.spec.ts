@@ -126,6 +126,51 @@ describe("SearchFacade com substituição do provider SearchGateway", () => {
     expect(facade.criteria().q).toBe("indenização");
     expect(facade.pageNumber()).toBe(1);
   });
+  it("prioriza resultados e consulta jurimetria somente ao abrir sua aba", async () => {
+    const gateway = new FakeGateway();
+    let resolveSearch!: (p: SearchPage) => void;
+    gateway.search.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveSearch = resolve;
+        }),
+    );
+    const facade = setup(gateway);
+    const pending = facade.search(initialCriteria);
+    expect(gateway.facets).not.toHaveBeenCalled();
+    expect(gateway.analyze).not.toHaveBeenCalled();
+    resolveSearch(page("first"));
+    await pending;
+    expect(gateway.facets).toHaveBeenCalledOnce();
+    expect(gateway.analyze).not.toHaveBeenCalled();
+    facade.setAnalysisVisible(true);
+    facade.setAnalysisVisible(false);
+    facade.setAnalysisVisible(true);
+    await Promise.resolve();
+    expect(gateway.analyze).toHaveBeenCalledOnce();
+    expect(facade.analysis()).toEqual(analysis);
+  });
+  it("ignora a análise superada e atualiza a aba aberta para novos critérios", async () => {
+    const gateway = new FakeGateway();
+    let resolveAnalysis!: (a: Analysis) => void;
+    gateway.analyze.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveAnalysis = resolve;
+        }),
+    );
+    const facade = setup(gateway);
+    await facade.search(initialCriteria);
+    facade.setAnalysisVisible(true);
+    const oldSignal = gateway.analyze.mock.calls[0][1] as AbortSignal;
+    await facade.search({ ...initialCriteria, q: "novo" });
+    await Promise.resolve();
+    expect(oldSignal.aborted).toBe(true);
+    expect(gateway.analyze).toHaveBeenCalledTimes(2);
+    resolveAnalysis({ ...analysis, population: 999 });
+    await Promise.resolve();
+    expect(facade.analysis()?.population).toBe(1);
+  });
   it("fecha a sessão e aborta requisições na destruição", async () => {
     const gateway = new FakeGateway();
     const facade = setup(gateway);

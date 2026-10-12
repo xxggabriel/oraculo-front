@@ -14,7 +14,7 @@ function setup() {
 }
 afterEach(() => TestBed.resetTestingModule());
 describe("PublicationTimelineComponent", () => {
-  it("usa datas de publicação, marca a atual e conserva texto e contexto de navegação", () => {
+  it("usa datas de publicação, marca a atual e conserva contexto de navegação", () => {
     const fixture = setup();
     const report = testTimeline("current", ["current", "undated"]);
     report.publications[1].publicationDate = null;
@@ -38,7 +38,7 @@ describe("PublicationTimelineComponent", () => {
     expect(entries[1].textContent).not.toContain("10/10/2026");
     expect(fixture.nativeElement.querySelector("script")).toBeNull();
     expect(entries[1].textContent).not.toContain('alert("xss")');
-    expect(entries[1].textContent).toContain("Tema de undated");
+    expect(entries[1].textContent).not.toContain("Tema de undated");
     const href = entries[1].querySelector("a").getAttribute("href");
     expect(new URL(href, "http://localhost").searchParams.get("returnTo")).toBe(
       "jurimetria",
@@ -86,19 +86,60 @@ it("explica o vínculo legado sem apresentar candidatas como total confirmado", 
   );
 });
 
-it("limita o texto visível após interpretar atributos longos e tags repartidas no snippet", () => {
+it("mostra tipoDocumento e skeleton sem renderizar o texto da publicação", () => {
   const fixture = setup();
-  const publication = testTimeline("html").publications[0];
-  const source = `<div title="${"x".repeat(500)}"><b>Dano &amp; reparação</b><br>Próximo trecho</div>`;
-  Object.assign(publication, {
-    snippets: [
-      [
-        { text: source.slice(0, 20), highlighted: true },
-        { text: source.slice(20), highlighted: false },
-      ],
-    ],
+  const item = {
+    ...testTimeline("current").publications[0],
+    sourceDocumentType: "Decisão interlocutória",
+  };
+  const publications = signal([item]);
+  const loading = signal(false);
+  Object.assign(fixture.componentInstance, {
+    currentPublication: signal("current"),
+    publications,
+    loading,
   });
-  expect(fixture.componentInstance.excerpt(publication)).toBe(
-    "Dano & reparação Próximo trecho",
+  fixture.detectChanges();
+  expect(fixture.nativeElement.textContent).toContain(
+    "Tipo de documento: Decisão interlocutória",
   );
+  expect(fixture.nativeElement.textContent).not.toContain("Tema de current");
+  publications.set([]);
+  loading.set(true);
+  fixture.changeDetectorRef.markForCheck();
+  fixture.detectChanges();
+  expect(fixture.nativeElement.querySelectorAll(".skeleton-row")).toHaveLength(
+    5,
+  );
+  expect(
+    fixture.nativeElement.querySelector("[role=status]").textContent,
+  ).toContain("Carregando");
+});
+
+it("exibe partes com polos e advogados com OAB sem inferir campos ausentes", () => {
+  const fixture = setup();
+  const report = testTimeline("current");
+  const item = {
+    ...report.publications[0],
+    recipients: [
+      { name: "Ána Teste", pole: "A" },
+      { name: "Bruno Exemplo", pole: "P" },
+      { name: null, pole: "terceiro" },
+    ],
+    attorneys: [
+      { name: "Dra. Érica", oabNumber: "00123-A", oabState: "GO" },
+      { name: "Doutor João", oabNumber: null, oabState: null },
+    ],
+  };
+  Object.assign(fixture.componentInstance, {
+    currentPublication: signal("current"),
+    publications: signal([item]),
+  });
+  fixture.detectChanges();
+  const text = fixture.nativeElement.textContent.replace(/\s+/g, " ");
+  expect(text).toContain("Ána Teste · Polo ativo");
+  expect(text).toContain("Bruno Exemplo · Polo passivo");
+  expect(text).toContain("Nome não informado · Polo informado: terceiro");
+  expect(text).toContain("Dra. Érica · OAB GO / 00123-A");
+  expect(text).toContain("Doutor João · OAB não informada");
 });

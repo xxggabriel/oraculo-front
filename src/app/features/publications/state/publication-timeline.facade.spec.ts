@@ -96,3 +96,37 @@ describe("Linha do tempo por publicação", () => {
     expect(facade.publications()).toEqual([]);
   });
 });
+
+it("exibe 5 inicialmente e mais 10 por vez usando o buffer antes de consultar a página seguinte", async () => {
+  const { execute, facade } = setup();
+  const first = testTimeline(
+    "source",
+    Array.from({ length: 20 }, (_, i) => `pub-${String(i).padStart(2, "0")}`),
+  );
+  first.hasMore = true;
+  execute.mockResolvedValueOnce(first);
+  await facade.load("source");
+  expect(facade.publications()).toHaveLength(5);
+  expect(facade.hasMore()).toBe(true);
+  await facade.loadMore();
+  expect(facade.publications()).toHaveLength(15);
+  expect(execute).toHaveBeenCalledTimes(1);
+  const next = testTimeline(
+    "source",
+    Array.from({ length: 20 }, (_, i) => `pub-${i + 20}`),
+  );
+  next.page = 1;
+  next.hasMore = false;
+  execute.mockResolvedValueOnce(next);
+  await facade.loadMore();
+  expect(facade.publications()).toHaveLength(25);
+  expect(execute).toHaveBeenCalledTimes(2);
+  await facade.loadMore();
+  expect(facade.publications()).toHaveLength(35);
+  await facade.loadMore();
+  expect(facade.publications()).toHaveLength(40);
+  expect(facade.hasMore()).toBe(false);
+  await facade.load("other");
+  expect(facade.publications()).toHaveLength(1);
+  facade.ngOnDestroy();
+});

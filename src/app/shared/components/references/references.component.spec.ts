@@ -28,11 +28,20 @@ class ContentStub {
   @Input() anchorNamespace = "publication";
 }
 
+@Component({
+  selector: "app-loading-skeleton",
+  standalone: true,
+  template: "{{ label }}",
+})
+class SkeletonStub {
+  @Input() label = "";
+}
+
 afterEach(() => TestBed.resetTestingModule());
 describe("PublicationReferencesComponent", () => {
   it("apresenta destino focável, destaca a menção e mantém auditoria recolhida", () => {
     TestBed.overrideComponent(PublicationReferencesComponent, {
-      set: { template, imports: [EvidenceStub, ContentStub] },
+      set: { template, imports: [EvidenceStub, ContentStub, SkeletonStub] },
     });
     const fixture = TestBed.createComponent(PublicationReferencesComponent);
     const ref = reference(
@@ -76,7 +85,7 @@ describe("PublicationReferencesComponent", () => {
   });
   it("preserva referências sem vínculo verificável e não oferece retorno para evidência de outra revisão", () => {
     TestBed.overrideComponent(PublicationReferencesComponent, {
-      set: { template, imports: [EvidenceStub, ContentStub] },
+      set: { template, imports: [EvidenceStub, ContentStub, SkeletonStub] },
     });
     const fixture = TestBed.createComponent(PublicationReferencesComponent);
     const ref = reference("stale", [
@@ -100,7 +109,7 @@ describe("PublicationReferencesComponent", () => {
 
 it("volta à ocorrência que abriu a referência, inclusive menções repetidas", () => {
   TestBed.overrideComponent(PublicationReferencesComponent, {
-    set: { template, imports: [EvidenceStub, ContentStub] },
+    set: { template, imports: [EvidenceStub, ContentStub, SkeletonStub] },
   });
   const fixture = TestBed.createComponent(PublicationReferencesComponent);
   const ref = reference("law", [
@@ -125,7 +134,7 @@ it("isola headings, regiões, trechos e destinos entre duas instâncias na mesma
     set: { imports: [ContentStub] },
   });
   TestBed.overrideComponent(PublicationReferencesComponent, {
-    set: { template, imports: [EvidenceStub, ContentStub] },
+    set: { template, imports: [EvidenceStub, ContentStub, SkeletonStub] },
   });
   const ref = reference("same", [{ start: 0, end: 1, surface: "a" }]);
   const ids: string[] = [];
@@ -162,7 +171,7 @@ it("isola headings, regiões, trechos e destinos entre duas instâncias na mesma
 
 it("mantém destinos distintos quando famílias diferentes usam o mesmo ID", () => {
   TestBed.overrideComponent(PublicationReferencesComponent, {
-    set: { template, imports: [EvidenceStub, ContentStub] },
+    set: { template, imports: [EvidenceStub, ContentStub, SkeletonStub] },
   });
   const fixture = TestBed.createComponent(PublicationReferencesComponent);
   const citation = reference(
@@ -208,7 +217,7 @@ it("mantém destinos distintos quando famílias diferentes usam o mesmo ID", () 
 
 it("apresenta menção HTML como texto visível e conserva fonte original nos detalhes", () => {
   TestBed.overrideComponent(PublicationReferencesComponent, {
-    set: { template, imports: [EvidenceStub, ContentStub] },
+    set: { template, imports: [EvidenceStub, ContentStub, SkeletonStub] },
   });
   const fixture = TestBed.createComponent(PublicationReferencesComponent);
   const surface = "<b>Art. 5 &amp; CF</b>";
@@ -237,7 +246,7 @@ it("apresenta menção HTML como texto visível e conserva fonte original nos de
 
 it("retorna à parte HTML clicada da segunda ocorrência e usa o contexto da ocorrência original", () => {
   TestBed.overrideComponent(PublicationReferencesComponent, {
-    set: { template, imports: [EvidenceStub, ContentStub] },
+    set: { template, imports: [EvidenceStub, ContentStub, SkeletonStub] },
   });
   const fixture = TestBed.createComponent(PublicationReferencesComponent);
   const surface = "Art. <b>5</b>";
@@ -280,7 +289,7 @@ it.each([
   "não oferece destino inexistente para referência removida de $source",
   ({ source, surface }) => {
     TestBed.overrideComponent(PublicationReferencesComponent, {
-      set: { template, imports: [EvidenceStub, ContentStub] },
+      set: { template, imports: [EvidenceStub, ContentStub, SkeletonStub] },
     });
     const fixture = TestBed.createComponent(PublicationReferencesComponent);
     const start = Array.from(source.slice(0, source.indexOf(surface))).length;
@@ -311,3 +320,98 @@ it.each([
     expect(ref.evidence[0]?.start).toBe(start);
   },
 );
+
+it("mostra cinco referências e expande em páginas de dez, reiniciando ao mudar a publicação", () => {
+  TestBed.overrideComponent(PublicationReferencesComponent, {
+    set: { template, imports: [EvidenceStub, ContentStub, SkeletonStub] },
+  });
+  const fixture = TestBed.createComponent(PublicationReferencesComponent);
+  const refs = Array.from({ length: 23 }, (_, index) =>
+    reference(`ref-${index}`, []),
+  );
+  const currentIdentity = signal(identity);
+  const references = signal(refs);
+  Object.assign(fixture.componentInstance, {
+    text: signal("abc"),
+    identity: currentIdentity,
+    references,
+  });
+  fixture.detectChanges();
+  expect(fixture.nativeElement.querySelectorAll("article")).toHaveLength(5);
+  fixture.nativeElement.querySelector("button").click();
+  fixture.detectChanges();
+  expect(fixture.nativeElement.querySelectorAll("article")).toHaveLength(15);
+  expect(fixture.nativeElement.querySelector("button").textContent).toContain(
+    "mais 8",
+  );
+  fixture.nativeElement.querySelector("button").click();
+  fixture.detectChanges();
+  expect(fixture.nativeElement.querySelectorAll("article")).toHaveLength(23);
+  expect(fixture.nativeElement.querySelector("button")).toBeNull();
+  currentIdentity.set({ ...identity, id: "another" });
+  fixture.detectChanges();
+  expect(fixture.nativeElement.querySelectorAll("article")).toHaveLength(5);
+  fixture.nativeElement.querySelector("button").click();
+  fixture.detectChanges();
+  references.set([...refs]);
+  fixture.detectChanges();
+  expect(fixture.nativeElement.querySelectorAll("article")).toHaveLength(5);
+});
+
+it("revela a página da referência profunda ativa mantendo o destino focável", () => {
+  TestBed.overrideComponent(PublicationReferencesComponent, {
+    set: { template, imports: [EvidenceStub, ContentStub, SkeletonStub] },
+  });
+  const fixture = TestBed.createComponent(PublicationReferencesComponent);
+  const refs = Array.from({ length: 28 }, (_, index) =>
+    reference(`ref-${index}`, []),
+  );
+  const activeReference = signal<string | null>(null);
+  Object.assign(fixture.componentInstance, {
+    text: signal("abc"),
+    identity: signal(identity),
+    references: signal(refs),
+    activeReference,
+  });
+  fixture.detectChanges();
+  activeReference.set(referenceAnchor(refs[21]!));
+  fixture.detectChanges();
+  expect(fixture.nativeElement.querySelectorAll("article")).toHaveLength(25);
+  const target = [...fixture.nativeElement.querySelectorAll("article")].find(
+    (article: HTMLElement) => article.id === referenceAnchor(refs[21]!),
+  ) as HTMLElement;
+  expect(target.getAttribute("tabindex")).toBe("-1");
+  target.focus();
+  expect(document.activeElement).toBe(target);
+  fixture.nativeElement.querySelector("button").click();
+  fixture.detectChanges();
+  expect(fixture.nativeElement.querySelectorAll("article")).toHaveLength(28);
+});
+
+it("exibe skeleton sem estado vazio nem referências enquanto carrega", () => {
+  TestBed.overrideComponent(PublicationReferencesComponent, {
+    set: { template, imports: [EvidenceStub, ContentStub, SkeletonStub] },
+  });
+  const fixture = TestBed.createComponent(PublicationReferencesComponent);
+  const loading = signal(true);
+  Object.assign(fixture.componentInstance, {
+    text: signal(""),
+    identity: signal(identity),
+    references: signal([]),
+    loading,
+  });
+  fixture.detectChanges();
+  expect(
+    fixture.nativeElement.querySelector("app-loading-skeleton"),
+  ).not.toBeNull();
+  expect(
+    fixture.nativeElement.querySelector("section").getAttribute("aria-busy"),
+  ).toBe("true");
+  expect(fixture.nativeElement.textContent).not.toContain("Nenhuma referência");
+  loading.set(false);
+  fixture.detectChanges();
+  expect(
+    fixture.nativeElement.querySelector("app-loading-skeleton"),
+  ).toBeNull();
+  expect(fixture.nativeElement.textContent).toContain("Nenhuma referência");
+});

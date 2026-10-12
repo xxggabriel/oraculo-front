@@ -1,16 +1,26 @@
-import { Injectable, OnDestroy, inject, signal } from "@angular/core";
+import { Injectable, OnDestroy, computed, inject, signal } from "@angular/core";
 import { ReadPublicationTimeline } from "../../../application/read-publication-timeline";
 import {
   PublicationTimeline,
+  TimelinePublication,
   PublicationTimelineQuery,
   compareTimelinePublications,
 } from "../../../core/publication-timeline";
-import { Publication, SearchFailure } from "../../../core/search";
+import { SearchFailure } from "../../../core/search";
 @Injectable()
 export class PublicationTimelineFacade implements OnDestroy {
   private readonly timeline = inject(ReadPublicationTimeline);
   readonly report = signal<PublicationTimeline | null>(null);
-  readonly publications = signal<readonly Publication[]>([]);
+  private readonly loaded = signal<readonly TimelinePublication[]>([]);
+  private readonly visibleLimit = signal(5);
+  readonly publications = computed(() =>
+    this.loaded().slice(0, this.visibleLimit()),
+  );
+  readonly hasMore = computed(
+    () =>
+      this.loaded().length > this.publications().length ||
+      !!this.report()?.hasMore,
+  );
   readonly selectedProcess = signal<string | null>(null);
   readonly loading = signal(false);
   readonly error = signal<SearchFailure | null>(null);
@@ -27,7 +37,8 @@ export class PublicationTimelineFacade implements OnDestroy {
     this.controller = null;
     this.id = null;
     this.report.set(null);
-    this.publications.set([]);
+    this.loaded.set([]);
+    this.visibleLimit.set(5);
     this.selectedProcess.set(null);
     this.loading.set(false);
     this.error.set(null);
@@ -45,17 +56,24 @@ export class PublicationTimelineFacade implements OnDestroy {
     )
       return Promise.resolve(null);
     this.selectedProcess.set(cnj);
-    this.publications.set([]);
+    this.loaded.set([]);
+    this.visibleLimit.set(5);
     return this.request({ cnj, page: 0, pageSize: 20 }, false);
   }
-  loadMore() {
+  async loadMore() {
     const report = this.report();
-    if (!report?.hasMore || this.loading() || this.error())
-      return Promise.resolve(undefined);
-    return this.request(
+    if (!this.hasMore() || !report || this.loading() || this.error())
+      return undefined;
+    const visible = this.publications().length;
+    const next = this.loaded()[visible]?.id;
+    this.visibleLimit.update((limit) => limit + 10);
+    if (this.loaded().length >= this.visibleLimit() || !report.hasMore)
+      return next ?? null;
+    const result = await this.request(
       { cnj: report.selectedProcess, page: report.page + 1, pageSize: 20 },
       true,
     );
+    return result === undefined ? undefined : (next ?? result);
   }
   retry() {
     return this.lastQuery
@@ -80,14 +98,12 @@ export class PublicationTimelineFacade implements OnDestroy {
     try {
       const report = await this.timeline.execute(id, query, controller.signal);
       if (!current()) return undefined;
-      const previous = append ? this.publications() : [];
+      const previous = append ? this.loaded() : [];
       const seen = new Set(previous.map((item) => item.id));
       const firstNew = report.publications.find((item) => !seen.has(item.id));
       const merged = new Map(previous.map((item) => [item.id, item]));
       for (const item of report.publications) merged.set(item.id, item);
-      this.publications.set(
-        [...merged.values()].sort(compareTimelinePublications),
-      );
+      this.loaded.set([...merged.values()].sort(compareTimelinePublications));
       this.report.set(report);
       this.selectedProcess.set(report.selectedProcess);
       return firstNew?.id ?? null;
