@@ -1182,6 +1182,71 @@
               "both"
             ],
             "description": "Publicidade do processo; a omissão é normalizada para both. Sempre intersectada com a população autorizada. Este acesso entrega somente publicações públicas/ativas; restricted retorna vazio e both não amplia autorização."
+          },
+          "partyName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Nome de parte destinatária: todos os termos no mesmo destinatário, sem buscar no corpo."
+          },
+          "attorneyName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Nome de advogado destinatário: todos os termos no mesmo advogado da OAB informada."
+          },
+          "oabNumber": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Número de OAB exato após remover espaços, pontos, barras e hífens; preserva zeros e sufixos."
+          },
+          "oabState": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "UF da OAB, duas letras; exige número ou nome de advogado e correlaciona o mesmo registro."
+          },
+          "collection": {
+            "type": "string",
+            "const": "jurisprudence",
+            "description": "Publicações com ementa própria projetada ou tipo decisório explícito na fonte. Unidade publicação, não precedentes únicos."
+          },
+          "ranking": {
+            "type": "string",
+            "enum": [
+              "bm25",
+              "rerank"
+            ],
+            "description": "Exige collection=jurisprudence. Omissão usa rerank, que exige sort=relevance. BM25 permite paginação completa; rerank limita a janela de candidatos declarada."
           }
         },
         "required": [
@@ -1408,6 +1473,9 @@
                 "type": "null"
               }
             ]
+          },
+          "jurisprudence": {
+            "$ref": "#/components/schemas/JurisprudencePreview"
           }
         },
         "required": [
@@ -1521,6 +1589,9 @@
               "maxLength": 2048
             },
             "maxItems": 30
+          },
+          "ranking": {
+            "$ref": "#/components/schemas/SearchRanking"
           }
         },
         "required": [
@@ -2148,7 +2219,11 @@
               "decisionMetrics",
               "exactProcessCount",
               "ledgerAccess",
-              "frozenCorpus"
+              "frozenCorpus",
+              "partyNameFilter",
+              "attorneyNameFilter",
+              "oabFilter",
+              "jurisprudenceSearch"
             ]
           },
           "available": {
@@ -2201,7 +2276,7 @@
             "items": {
               "$ref": "#/components/schemas/Feature"
             },
-            "maxItems": 20
+            "maxItems": 21
           },
           "accessGuarantee": {
             "type": "string",
@@ -3199,6 +3274,202 @@
           "processes",
           "snippets",
           "score"
+        ]
+      },
+      "EmentaSource": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ementaId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "enrichmentId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "revisionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "textVersionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "rulesVersion": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "inputTextSha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "configurationHash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "start": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "end": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "offsetUnit": {
+            "type": "string",
+            "const": "unicode_codepoint"
+          },
+          "reviewStatus": {
+            "type": "string",
+            "enum": [
+              "unreviewed",
+              "proposed",
+              "validated",
+              "needs_review"
+            ]
+          }
+        },
+        "required": [
+          "ementaId",
+          "enrichmentId",
+          "revisionId",
+          "textVersionId",
+          "rulesVersion",
+          "inputTextSha256",
+          "configurationHash",
+          "start",
+          "end",
+          "offsetUnit",
+          "reviewStatus"
+        ]
+      },
+      "JurisprudencePreview": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "textKind": {
+            "type": "string",
+            "enum": [
+              "ementa",
+              "publication"
+            ]
+          },
+          "preview": {
+            "$ref": "#/components/schemas/PreviewSnippet"
+          },
+          "ementaHighlights": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Snippet"
+            },
+            "maxItems": 2
+          },
+          "publicationHighlights": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Snippet"
+            },
+            "maxItems": 2
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "ementaSource": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EmentaSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "textKind",
+          "preview",
+          "ementaHighlights",
+          "publicationHighlights",
+          "truncated",
+          "ementaSource"
+        ]
+      },
+      "PreviewSnippet": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 1800
+          },
+          "highlights": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Span"
+            },
+            "maxItems": 40
+          }
+        },
+        "required": [
+          "text",
+          "highlights"
+        ]
+      },
+      "SearchRanking": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "bm25",
+              "rerank"
+            ]
+          },
+          "windowSize": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 500
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "candidates": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 500
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "string",
+            "const": "1"
+          }
+        },
+        "required": [
+          "mode",
+          "windowSize",
+          "candidates",
+          "truncated",
+          "version"
         ]
       }
     }

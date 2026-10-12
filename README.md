@@ -17,6 +17,10 @@ Acesse `http://127.0.0.1:4200`. Inicie `../oraculo-back` separadamente na porta 
 
 A integração com o **Elasticsearch real do servidor `192.168.100.27`** está configurada no backend com HTTPS, certificado validado e chave somente de leitura. Antes de iniciar a API, execute `npm run es:tunnel -- up` em `../oraculo-back`. Com a API e o frontend ativos, `npm run smoke:live` no backend verifica o fluxo pela porta 4200, incluindo busca, paginação, detalhe, facetas e jurimetria. Veja [configuração e operação do acervo real](../oraculo-back/docs/live-integration.md). Os E2E abaixo exigem o perfil sintético separado e não devem ser executados contra o acervo real.
 
+## Pesquisa de jurisprudência
+
+Página `/jurisprudencia` com busca em ementa e texto da publicação, filtros combináveis, ementa como prévia padrão, fallback para publicação e highlights identificados por campo. Oferece relevância refinada por um reranker lexical em janela explícita e busca BM25 de todo o recorte. A ordem refinada fica estável durante a sessão; a API revalida acesso e revisão em cada página. Veja [contratos, limites e referências de projeto](docs/jurisprudence.md).
+
 ## Jurimetria por referências
 
 Nova página em `/jurimetria`, com condição de referências jurisprudenciais/normativas (ou ambas), política de validação, lista paginada e plots por tribunal, tipo, mês, presença e referências mais frequentes. Os gráficos usam a população completa admitida e permitem refino por tribunal/tipo. A consulta cruza referências no backend e revalida revisão/seleção/acesso.
@@ -43,7 +47,7 @@ As páginas foram separadas de estado e apresentação. Shell, filtros, resumos,
 
 No detalhe, referências jurisprudenciais e normativas comprovadas recebem links no próprio texto. Clicar leva aos seus metadados e evidências; o retorno volta à ocorrência clicada. A associação usa os offsets Unicode da API e valida publicação, revisão, versão de texto e superfície. Sobreposições mantêm todos os destinos e não há execução de HTML. Como a API não entrega URLs oficiais resolvidas, o destino é a referência interna da publicação.
 
-O bloco **Dados da publicação** apresenta relator, órgão judicial, classe processual, tipo de documento e grau de instância recebidos da fonte, indicando ausência ou ambiguidade. O filtro **Publicidade do processo** permite escolher públicos, privados/restritos ou ambos na pesquisa e jurimetria, preservando a seleção na URL e nos links. O acesso atual permite apenas publicações públicas: privados retorna vazio com explicação, e ambos consulta somente a população disponível. Não concede acesso a material em segredo de justiça.
+O bloco **Dados da publicação** apresenta relator, órgão judicial, classe processual, tipo de documento e grau de instância recebidos da fonte, indicando ausência ou ambiguidade. Os filtros avançados permitem buscar pelo nome das partes, nome do advogado ou número da OAB, com UF opcional vinculada ao mesmo advogado. A URL preserva esses critérios. O controle de publicidade foi removido do painel; URLs legadas continuam respeitando os critérios de acesso da API. Na lista, uma data disponível somente como disponibilização recebe esse rótulo e não é apresentada como data de publicação.
 
 A interna também apresenta até quatro [publicações relacionadas](docs/related-publications.md), com o motivo de cada sugestão e carregamento independente. Um caso de uso e uma porta específicos isolam a estratégia para evoluções futuras.
 
@@ -51,7 +55,7 @@ A interna apresenta a [linha do tempo das publicações do processo](docs/public
 
 ## Experiência
 
-A URL conserva texto, modo, tribunal, tipo, CNJ/relação, eixo temporal, datas, tratamento de ausentes, ordenação e tamanho de página. Cursores e IDs de sessão permanecem em memória. O histórico de cursores permite voltar reconsultando a API para revalidar o acesso, sem offsets. Voltar à primeira página reabre o recorte em uma nova sessão; novas condições também encerram a sessão anterior. A rota de detalhe carrega sob demanda e mantém o recorte no link de retorno.
+A URL conserva texto, modo, tribunal, tipo, nomes das partes/advogados, OAB/UF, CNJ/relação, eixo temporal, datas, tratamento de ausentes, ordenação e tamanho de página. Cursores e IDs de sessão permanecem em memória. O histórico de cursores permite voltar reconsultando a API para revalidar o acesso, sem offsets. Voltar à primeira página reabre o recorte em uma nova sessão; novas condições também encerram a sessão anterior. A rota de detalhe carrega sob demanda e mantém o recorte no link de retorno.
 
 Consultas são explícitas por envio do formulário. Requisições superadas são abortadas e identificadas por geração; respostas antigas não sobrescrevem o estado atual. Não há busca durante digitação, portanto não há debounce. Signals coordenam a apresentação e RxJS observa somente as mudanças de rota. A destruição do workspace cancela requisições e solicita o encerramento da sessão. Esse encerramento é best effort; o backend limita o tempo de vida e a quantidade de sessões quando a comunicação falha.
 
@@ -75,3 +79,7 @@ npm run test:e2e
 A unidade das distribuições é **publicação**, não processo ou julgamento. Resultados são revalidados na projeção e as contagens da busca se referem ao retrato PIT; distribuições consultam a projeção atual em operação separada. Não certificam completude judicial ou atualização imediata do ledger. O backend sinaliza truncamento, aproximação, ausentes e limitações. Datas civis são exibidas sem conversão de timezone; a data da fonte é um eixo de aquisição separado.
 
 Métricas decisórias, contagem exata de processos e corpus congelado dependem de capacidades comprovadas. Recursos indisponíveis exibem o motivo retornado pela API. Citações e referências não provam existência, força vinculante, aplicabilidade ou vigência. Veja [arquitetura](docs/architecture.md).
+
+## Deploy
+
+O deploy em `gabriel@192.168.100.27` publica o front-end na porta 4200 e a API na porta 3000, usando Docker Compose e o acervo real. Consulte [operação da implantação](docs/deployment.md).

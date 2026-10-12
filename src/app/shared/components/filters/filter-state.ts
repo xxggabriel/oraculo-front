@@ -5,6 +5,10 @@ export type FilterSelection = Pick<
   Criteria,
   | "courts"
   | "documentTypes"
+  | "partyName"
+  | "attorneyName"
+  | "oabNumber"
+  | "oabState"
   | "visibility"
   | "process"
   | "dateAxis"
@@ -16,6 +20,10 @@ export interface FilterChip {
   readonly key:
     | "court"
     | "documentType"
+    | "partyName"
+    | "attorneyName"
+    | "oabNumber"
+    | "oabState"
     | "visibility"
     | "process"
     | "date"
@@ -31,6 +39,10 @@ export function filterSelection(criteria: Criteria): FilterSelection {
     courts: [...courts],
     documentTypes: [...documentTypes],
     visibility: criteria.visibility ?? "both",
+    partyName: criteria.partyName ?? null,
+    attorneyName: criteria.attorneyName ?? null,
+    oabNumber: criteria.oabNumber ?? null,
+    oabState: criteria.oabState ?? null,
     process: process ? { ...process } : null,
     dateAxis,
     from,
@@ -72,6 +84,15 @@ export function filterChips(c: FilterSelection): readonly FilterChip[] {
           ? "Processos públicos"
           : "Processos privados (restritos)",
     });
+  for (const [key, label] of [
+    ["partyName", "Parte"],
+    ["attorneyName", "Advogado"],
+    ["oabNumber", "OAB"],
+    ["oabState", "UF da OAB"],
+  ] as const) {
+    if (c[key])
+      chips.push({ key, value: c[key], label: `${label}: ${c[key]}` });
+  }
   if (c.process)
     chips.push({
       key: "process",
@@ -106,6 +127,21 @@ export function removeFilter(
   chip: FilterChip,
 ): FilterSelection {
   switch (chip.key) {
+    case "partyName":
+    case "oabState":
+      return { ...c, [chip.key]: null };
+    case "attorneyName":
+      return {
+        ...c,
+        attorneyName: null,
+        oabState: c.oabNumber ? c.oabState : null,
+      };
+    case "oabNumber":
+      return {
+        ...c,
+        oabNumber: null,
+        oabState: c.attorneyName ? c.oabState : null,
+      };
     case "visibility":
       return { ...c, visibility: "both" };
     case "court":

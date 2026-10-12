@@ -204,6 +204,24 @@ export interface components {
              * @enum {string}
              */
             visibility?: "public" | "restricted" | "both";
+            /** @description Nome de parte destinatária: todos os termos no mesmo destinatário, sem buscar no corpo. */
+            partyName?: string | null;
+            /** @description Nome de advogado destinatário: todos os termos no mesmo advogado da OAB informada. */
+            attorneyName?: string | null;
+            /** @description Número de OAB exato após remover espaços, pontos, barras e hífens; preserva zeros e sufixos. */
+            oabNumber?: string | null;
+            /** @description UF da OAB, duas letras; exige número ou nome de advogado e correlaciona o mesmo registro. */
+            oabState?: string | null;
+            /**
+             * @description Publicações com ementa própria projetada ou tipo decisório explícito na fonte. Unidade publicação, não precedentes únicos.
+             * @constant
+             */
+            collection?: "jurisprudence";
+            /**
+             * @description Exige collection=jurisprudence. Omissão usa rerank, que exige sort=relevance. BM25 permite paginação completa; rerank limita a janela de candidatos declarada.
+             * @enum {string}
+             */
+            ranking?: "bm25" | "rerank";
         };
         SearchRequest: {
             criteria: components["schemas"]["Criteria"];
@@ -240,6 +258,7 @@ export interface components {
             processes: string[];
             snippets: components["schemas"]["Snippet"][];
             score: number | null;
+            jurisprudence?: components["schemas"]["JurisprudencePreview"];
         };
         Total: {
             value: number;
@@ -260,6 +279,7 @@ export interface components {
             strategyVersion: "1";
             consistency: components["schemas"]["Consistency"];
             warnings: string[];
+            ranking?: components["schemas"]["SearchRanking"];
         };
         Bucket: {
             key: string;
@@ -375,7 +395,7 @@ export interface components {
         };
         Feature: {
             /** @enum {string} */
-            name: "search" | "courtFilter" | "documentTypeFilter" | "publicationDate" | "availabilityDate" | "sourceDate" | "facets" | "publicationMetrics" | "acts" | "decisionUnits" | "classifications" | "citations" | "normativeReferences" | "decisionMetrics" | "exactProcessCount" | "ledgerAccess" | "frozenCorpus";
+            name: "search" | "courtFilter" | "documentTypeFilter" | "publicationDate" | "availabilityDate" | "sourceDate" | "facets" | "publicationMetrics" | "acts" | "decisionUnits" | "classifications" | "citations" | "normativeReferences" | "decisionMetrics" | "exactProcessCount" | "ledgerAccess" | "frozenCorpus" | "partyNameFilter" | "attorneyNameFilter" | "oabFilter" | "jurisprudenceSearch";
             available: boolean;
             reason: string | null;
         };
@@ -568,6 +588,43 @@ export interface components {
             attorneys?: components["schemas"]["TimelineAttorney"][] | null;
             /** @description Tipo de documento literal informado pela fonte em extensions.tipoDocumento; distinto do tipo de comunicação. */
             sourceDocumentType?: string | null;
+        };
+        EmentaSource: {
+            ementaId: string;
+            enrichmentId: string;
+            revisionId: string;
+            textVersionId: string;
+            rulesVersion: string;
+            inputTextSha256: string;
+            configurationHash: string;
+            start: number;
+            end: number;
+            /** @constant */
+            offsetUnit: "unicode_codepoint";
+            /** @enum {string} */
+            reviewStatus: "unreviewed" | "proposed" | "validated" | "needs_review";
+        };
+        JurisprudencePreview: {
+            /** @enum {string} */
+            textKind: "ementa" | "publication";
+            preview: components["schemas"]["PreviewSnippet"];
+            ementaHighlights: components["schemas"]["Snippet"][];
+            publicationHighlights: components["schemas"]["Snippet"][];
+            truncated: boolean;
+            ementaSource: components["schemas"]["EmentaSource"] | null;
+        };
+        PreviewSnippet: {
+            text: string;
+            highlights: components["schemas"]["Span"][];
+        };
+        SearchRanking: {
+            /** @enum {string} */
+            mode: "bm25" | "rerank";
+            windowSize: number | null;
+            candidates: number | null;
+            truncated: boolean;
+            /** @constant */
+            version: "1";
         };
     };
     responses: never;

@@ -13,9 +13,13 @@ export const axisLabels: Partial<Record<string, string>> = {
   source: "Data da fonte (aquisição)",
 };
 export const featureLabels: Partial<Record<string, string>> = {
+  jurisprudenceSearch: "Pesquisa em ementas e publicações decisórias",
   search: "Pesquisa",
   courtFilter: "Filtro por tribunal",
   documentTypeFilter: "Filtro por tipo",
+  partyNameFilter: "Filtro por nome das partes",
+  attorneyNameFilter: "Filtro por nome de advogado",
+  oabFilter: "Filtro por OAB",
   publicationDate: "Data de publicação",
   availabilityDate: "Data de disponibilização",
   sourceDate: "Data da fonte",

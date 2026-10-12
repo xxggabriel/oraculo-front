@@ -7,6 +7,173 @@ import { referenceReport } from "../../../tests/jurimetry-fixtures";
 import { testDetail } from "../../../tests/related-fixtures";
 import { judicialDistribution } from "../../../tests/judicial-fixtures";
 describe("HTTP boundary e contrato gerado", () => {
+  function searchResponse() {
+    return {
+      items: [
+        {
+          id: "pub-001",
+          revisionId: "revision-001",
+          textVersionId: "text-001",
+          court: "TJGO",
+          documentType: "acordao",
+          publicationDate: "2026-10-08",
+          availabilityDate: null,
+          sourceDate: null,
+          processes: [],
+          snippets: [],
+          score: 2,
+        },
+      ],
+      total: { value: 1, relation: "eq" },
+      nextCursor: null,
+      sessionId: null,
+      expiresAt: null,
+      tookMs: 3,
+      strategy: "lexical",
+      strategyVersion: "1",
+      consistency: "projection_snapshot",
+      warnings: [],
+    };
+  }
+  it("envia a coleção e o ranking e mapeia ementa com marcas Unicode e proveniência", async () => {
+    const source = {
+      ementaId: "ementa-001",
+      enrichmentId: "enrichment-001",
+      revisionId: "revision-001",
+      textVersionId: "text-001",
+      inputTextSha256: "a".repeat(64),
+      start: 12,
+      end: 24,
+      offsetUnit: "unicode_codepoint",
+      rulesVersion: "1",
+      configurationHash: "b".repeat(64),
+      reviewStatus: "validated",
+    };
+    const body = searchResponse();
+    const ranking = {
+      mode: "rerank",
+      windowSize: 100,
+      candidates: 1,
+      truncated: false,
+      version: "1",
+    };
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...body,
+          ranking,
+          items: [
+            {
+              ...body.items[0],
+              jurisprudence: {
+                textKind: "ementa",
+                preview: {
+                  text: "😀 mérito civil",
+                  highlights: [{ start: 2, end: 8 }],
+                },
+                ementaHighlights: [
+                  { text: "Outra tese", highlights: [{ start: 6, end: 10 }] },
+                ],
+                publicationHighlights: [
+                  { text: "Texto civil", highlights: [{ start: 6, end: 11 }] },
+                ],
+                truncated: true,
+                ementaSource: source,
+              },
+            },
+          ],
+        }),
+      ),
+    );
+    const result = await new HttpSearchGateway("/api/v1", transport).search(
+      {
+        ...initialCriteria,
+        q: "mérito civil",
+        collection: "jurisprudence",
+        ranking: "rerank",
+      },
+      null,
+      new AbortController().signal,
+      20,
+    );
+    expect(JSON.parse(String(transport.mock.calls[0][1]?.body))).toMatchObject({
+      criteria: { collection: "jurisprudence", ranking: "rerank" },
+      pageSize: 20,
+    });
+    const preview = result.publications[0].jurisprudence;
+    expect(preview?.preview).toContainEqual({
+      text: "mérito",
+      highlighted: true,
+    });
+    expect(preview?.preview.map((part) => part.text).join("")).toBe(
+      "😀 mérito civil",
+    );
+    expect(preview?.ementaHighlights[0]).toContainEqual({
+      text: "tese",
+      highlighted: true,
+    });
+    expect(preview?.publicationHighlights[0]).toContainEqual({
+      text: "civil",
+      highlighted: true,
+    });
+    expect(preview?.ementaSource).toEqual(source);
+    expect(result.ranking).toEqual(ranking);
+  });
+  it("preserva o texto da publicação quando a ementa está ausente", async () => {
+    const body = searchResponse();
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...body,
+          items: [
+            {
+              ...body.items[0],
+              jurisprudence: {
+                textKind: "publication",
+                preview: {
+                  text: "Publicação 😀 integral",
+                  highlights: [{ start: 13, end: 21 }],
+                },
+                ementaHighlights: [],
+                publicationHighlights: [],
+                truncated: false,
+                ementaSource: null,
+              },
+            },
+          ],
+        }),
+      ),
+    );
+    const result = await new HttpSearchGateway("/api/v1", transport).search(
+      { ...initialCriteria, collection: "jurisprudence" },
+      null,
+      new AbortController().signal,
+    );
+    expect(result.publications[0].jurisprudence).toMatchObject({
+      textKind: "publication",
+      ementaSource: null,
+      truncated: false,
+      preview: expect.arrayContaining([
+        { text: "integral", highlighted: true },
+      ]),
+    });
+    expect(result).not.toHaveProperty("ranking");
+  });
+  it("aceita a busca legada sem inventar ementa, proveniência ou ranking", async () => {
+    const transport = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(JSON.stringify(searchResponse())));
+    const result = await new HttpSearchGateway("/api/v1", transport).search(
+      initialCriteria,
+      null,
+      new AbortController().signal,
+    );
+    expect(result.publications[0]).not.toHaveProperty("jurisprudence");
+    expect(result).not.toHaveProperty("ranking");
+    expect(
+      JSON.parse(String(transport.mock.calls[0][1]?.body)).criteria,
+    ).not.toHaveProperty("collection");
+  });
   it("mapeia metadados do detalhe e aceita respostas legadas sem esses campos", async () => {
     const detail = testDetail("pub-001");
     const metadata = {
@@ -49,6 +216,46 @@ describe("HTTP boundary e contrato gerado", () => {
     expect(
       (await gateway.detail("pub-001", new AbortController().signal)).metadata,
     ).toBeNull();
+  });
+  it("envia filtros de pessoas e OAB preservando zeros e recebe os mesmos critérios", async () => {
+    const fields = {
+      partyName: "Maria Silva",
+      attorneyName: "João Lima",
+      oabNumber: "00123A",
+      oabState: "GO",
+    };
+    const { publications: _publications, ...report } = referenceReport();
+    void _publications;
+    const response = {
+      ...report,
+      items: [],
+      total: { value: report.population, relation: "eq" },
+    };
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...response,
+          criteria: { ...report.criteria, ...fields },
+        }),
+        { status: 200 },
+      ),
+    );
+    const gateway = new HttpSearchGateway("/api/v1", transport);
+    const query: ReferenceQuery = {
+      criteria: { ...initialCriteria, ...fields },
+      references: "any",
+      includeProposals: false,
+      page: 1,
+      pageSize: 10,
+    };
+    const result = await gateway.queryReferences(
+      query,
+      new AbortController().signal,
+    );
+    expect(
+      JSON.parse(String(transport.mock.calls[0][1]?.body)).criteria,
+    ).toMatchObject(fields);
+    expect(result.criteria).toMatchObject(fields);
   });
   it("recusa uma publicidade inválida antes de consultar a API", async () => {
     const transport = vi.fn<typeof fetch>();

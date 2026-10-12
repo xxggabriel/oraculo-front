@@ -107,3 +107,52 @@ describe("Períodos civis e seleção de filtros", () => {
     ).toMatchObject({ courts: ["TJSP"], documentTypes: ["Sentença"] });
   });
 });
+
+describe("Chips de pessoas e OAB", () => {
+  it("remove UF que ficaria isolada sem nome ou inscrição de advogado", () => {
+    const selection = filterSelection({
+      ...initialCriteria,
+      oabNumber: "123",
+      oabState: "GO",
+    });
+    const chip = filterChips(selection).find(
+      (item) => item.key === "oabNumber",
+    )!;
+    expect(removeFilter(selection, chip)).toMatchObject({
+      oabNumber: null,
+      oabState: null,
+    });
+  });
+  it("identifica cada filtro e preserva os demais ao remover", () => {
+    const selection = filterSelection({
+      ...initialCriteria,
+      partyName: "Maria",
+      attorneyName: "João",
+      oabNumber: "00123A",
+      oabState: "GO",
+    });
+    const chips = filterChips(selection);
+    expect(chips.map((c) => c.label)).toEqual([
+      "Parte: Maria",
+      "Advogado: João",
+      "OAB: 00123A",
+      "UF da OAB: GO",
+    ]);
+    for (const chip of chips)
+      expect(
+        removeFilter(selection, chip)[
+          chip.key as "partyName" | "attorneyName" | "oabNumber" | "oabState"
+        ],
+      ).toBeNull();
+    expect(
+      sameFilters(
+        selection,
+        filterSelection({
+          ...initialCriteria,
+          ...selection,
+          partyName: "Outra",
+        }),
+      ),
+    ).toBe(false);
+  });
+});

@@ -13,6 +13,14 @@ export const appConfig: ApplicationConfig = {
           ),
       },
       {
+        path: "jurisprudencia",
+        title: "Oráculo · Jurisprudência",
+        loadComponent: () =>
+          import("../features/jurisprudence/pages/jurisprudence-page.component").then(
+            (m) => m.JurisprudencePageComponent,
+          ),
+      },
+      {
         path: "jurimetria",
         loadComponent: () =>
           import("../features/jurimetry/pages/jurimetry-page.component").then(

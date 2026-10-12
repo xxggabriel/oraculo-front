@@ -30,7 +30,7 @@
           </dt>
           <dd class="mt-1 text-xs leading-5 text-muted">
             {{ feature.available ? "Disponível" : "Indisponível"
-            }}{{ feature.reason ? " · " + feature.reason : "" }}
+            }}{{ reasonLabel(feature) ? " · " + reasonLabel(feature) : "" }}
           </dd>
         </div>
       }

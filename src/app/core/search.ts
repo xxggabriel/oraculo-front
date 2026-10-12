@@ -3,12 +3,17 @@ export type DateAxis = "publication" | "availability" | "source";
 export type MissingDates = "include" | "exclude" | "only";
 export type Sort = "relevance" | "date_desc";
 export type Visibility = "public" | "restricted" | "both";
+export type RankingMode = "bm25" | "rerank";
 export interface Criteria {
   readonly q: string;
   readonly mode: Mode;
   readonly courts: readonly string[];
   readonly documentTypes: readonly string[];
   readonly visibility?: Visibility;
+  readonly partyName?: string | null;
+  readonly attorneyName?: string | null;
+  readonly oabNumber?: string | null;
+  readonly oabState?: string | null;
   readonly process: {
     readonly cnj: string;
     readonly relation: "any" | "publication_process" | "referenced";
@@ -18,6 +23,8 @@ export interface Criteria {
   readonly to: string | null;
   readonly missingDates: MissingDates;
   readonly sort: Sort;
+  readonly collection?: "jurisprudence";
+  readonly ranking?: RankingMode;
 }
 export const initialCriteria: Criteria = {
   q: "",
@@ -48,6 +55,36 @@ export interface Publication {
   readonly processes: readonly string[];
   readonly snippets: readonly (readonly TextPart[])[];
   readonly score: number | null;
+  readonly jurisprudence?: JurisprudencePreview;
+}
+export interface JurisprudencePreview {
+  readonly textKind: "ementa" | "publication";
+  readonly preview: readonly TextPart[];
+  readonly ementaHighlights: readonly (readonly TextPart[])[];
+  readonly publicationHighlights: readonly (readonly TextPart[])[];
+  readonly truncated: boolean;
+  readonly ementaSource: EmentaSource | null;
+}
+export interface EmentaSource {
+  readonly ementaId: string;
+  readonly enrichmentId: string;
+  readonly revisionId: string;
+  readonly textVersionId: string;
+  readonly inputTextSha256: string;
+  readonly start: number;
+  readonly end: number;
+  readonly offsetUnit: "unicode_codepoint";
+  readonly rulesVersion: string;
+  readonly configurationHash: string;
+  readonly reviewStatus:
+    "unreviewed" | "proposed" | "validated" | "needs_review";
+}
+export interface SearchRanking {
+  readonly mode: RankingMode;
+  readonly windowSize: number | null;
+  readonly candidates: number | null;
+  readonly truncated: boolean;
+  readonly version: "1";
 }
 export interface SearchPage {
   readonly publications: readonly Publication[];
@@ -60,6 +97,7 @@ export interface SearchPage {
   readonly strategy: string;
   readonly consistency: string;
   readonly warnings: readonly string[];
+  readonly ranking?: SearchRanking;
 }
 export interface Distribution {
   readonly field: "court" | "documentType" | "period";

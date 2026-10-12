@@ -3,8 +3,7 @@
     class="back-link inline-flex items-center gap-2 text-sm font-medium text-brand-700 hover:underline"
     [routerLink]="returnRoute()"
     [queryParams]="route.snapshot.queryParams"
-    ><span aria-hidden="true">←</span> {{ returnRoute() === '/jurimetria' ?
-    'Voltar à jurimetria' : 'Voltar à pesquisa' }}</a
+    ><span aria-hidden="true">←</span> {{ returnLabel() }}</a
   >
   @if (loading()) {
   <app-loading-skeleton label="Carregando publicação…" [count]="2" />

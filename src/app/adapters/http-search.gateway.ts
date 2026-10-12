@@ -33,6 +33,10 @@ function criteriaToApi(c: Criteria): Api["Criteria"] {
   return {
     ...c,
     visibility: c.visibility ?? "both",
+    partyName: c.partyName ?? null,
+    attorneyName: c.attorneyName ?? null,
+    oabNumber: c.oabNumber ?? null,
+    oabState: c.oabState ?? null,
     courts: [...c.courts],
     documentTypes: [...c.documentTypes],
     process: c.process ? { ...c.process } : null,
@@ -73,6 +77,22 @@ function publication(p: Api["Summary"]): Publication {
     processes: [...p.processes],
     snippets: p.snippets.map(snippetParts),
     score: p.score,
+    ...(p.jurisprudence
+      ? {
+          jurisprudence: {
+            textKind: p.jurisprudence.textKind,
+            preview: snippetParts(p.jurisprudence.preview),
+            ementaHighlights:
+              p.jurisprudence.ementaHighlights.map(snippetParts),
+            publicationHighlights:
+              p.jurisprudence.publicationHighlights.map(snippetParts),
+            truncated: p.jurisprudence.truncated,
+            ementaSource: p.jurisprudence.ementaSource
+              ? { ...p.jurisprudence.ementaSource }
+              : null,
+          },
+        }
+      : {}),
   };
 }
 function distribution(f: Api["Facet"]): Distribution {
@@ -178,6 +198,7 @@ export class HttpSearchGateway
       strategy: r.strategy,
       consistency: r.consistency,
       warnings: r.warnings,
+      ...(r.ranking ? { ranking: { ...r.ranking } } : {}),
     };
   }
   async facets(

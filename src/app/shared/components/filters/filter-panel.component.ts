@@ -20,6 +20,7 @@ import {
   MissingDates,
   Visibility,
 } from "../../../core/search";
+import { brazilianStates } from "../../brazilian-states";
 import { FacetSelectComponent } from "./facet-select.component";
 import {
   DatePreset,
@@ -41,6 +42,7 @@ import {
 export class FilterPanelComponent implements OnDestroy {
   readonly criteria = input.required<Criteria>();
   readonly idPrefix = input("filter");
+  readonly embedded = input(false);
   readonly toggleButton =
     viewChild<ElementRef<HTMLButtonElement>>("toggleButton");
   readonly facets = input<readonly Distribution[]>([]);
@@ -48,6 +50,7 @@ export class FilterPanelComponent implements OnDestroy {
   readonly loading = input(false);
   readonly apply = output<FilterSelection>();
   readonly clear = output<void>();
+  readonly cancelled = output<void>();
   readonly open = signal(false);
   readonly error = signal<string | null>(null);
   readonly preset = signal<DatePreset>("all");
@@ -62,6 +65,10 @@ export class FilterPanelComponent implements OnDestroy {
       c.q,
       c.mode,
       c.process,
+      c.partyName ?? null,
+      c.attorneyName ?? null,
+      c.oabNumber ?? null,
+      c.oabState ?? null,
       c.dateAxis,
       c.from,
       c.to,
@@ -69,12 +76,17 @@ export class FilterPanelComponent implements OnDestroy {
       c.visibility ?? "both",
     ]);
   });
+  readonly brazilianStates = brazilianStates;
   readonly inputClass =
     "h-10 w-full min-w-0 rounded-lg border border-line bg-white px-3 text-sm text-ink disabled:bg-surface disabled:opacity-60";
   readonly form = new FormGroup({
     courts: new FormControl<readonly string[]>([], { nonNullable: true }),
     types: new FormControl<readonly string[]>([], { nonNullable: true }),
     visibility: new FormControl<Visibility>("both", { nonNullable: true }),
+    partyName: new FormControl("", { nonNullable: true }),
+    attorneyName: new FormControl("", { nonNullable: true }),
+    oabNumber: new FormControl("", { nonNullable: true }),
+    oabState: new FormControl("", { nonNullable: true }),
     process: new FormControl("", { nonNullable: true }),
     relation: new FormControl<"any" | "publication_process" | "referenced">(
       "publication_process",
@@ -106,6 +118,10 @@ export class FilterPanelComponent implements OnDestroy {
       courts: f.courts,
       documentTypes: f.types,
       visibility: f.visibility,
+      partyName: f.partyName.trim() || null,
+      attorneyName: f.attorneyName.trim() || null,
+      oabNumber: f.oabNumber.trim() || null,
+      oabState: f.oabState.trim().toUpperCase() || null,
       process: f.process.trim()
         ? { cnj: f.process.trim(), relation: f.relation }
         : null,
@@ -121,6 +137,10 @@ export class FilterPanelComponent implements OnDestroy {
         courts: [...filters.courts],
         types: [...filters.documentTypes],
         visibility: filters.visibility ?? "both",
+        partyName: filters.partyName ?? "",
+        attorneyName: filters.attorneyName ?? "",
+        oabNumber: filters.oabNumber ?? "",
+        oabState: filters.oabState ?? "",
         process: filters.process?.cnj ?? "",
         relation: filters.process?.relation ?? "publication_process",
         dateAxis: filters.dateAxis,
@@ -143,6 +163,15 @@ export class FilterPanelComponent implements OnDestroy {
       true
     );
   }
+  unavailableReason(name: string): string | null {
+    if (this.available(name)) return null;
+    const labels: Record<string, string> = {
+      partyNameFilter: "partes",
+      attorneyNameFilter: "advogados",
+      oabFilter: "OAB",
+    };
+    return `A pesquisa por ${labels[name] ?? "este filtro"} ainda não está disponível neste acervo.`;
+  }
   selectCourts(values: readonly string[]) {
     this.form.controls.courts.setValue(values);
   }
@@ -164,8 +193,15 @@ export class FilterPanelComponent implements OnDestroy {
       filters.to,
       filters.missingDates,
     );
-    this.error.set(error);
-    if (error) return;
+    const personError =
+      filters.oabState &&
+      !brazilianStates.some((state) => state.code === filters.oabState)
+        ? "Selecione uma UF válida da OAB."
+        : filters.oabState && !filters.oabNumber && !filters.attorneyName
+          ? "Informe o nome do advogado ou o número da OAB para usar a UF."
+          : null;
+    this.error.set(error ?? personError);
+    if (error || personError) return;
     this.open.set(false);
     this.apply.emit(filters);
   }
@@ -178,6 +214,7 @@ export class FilterPanelComponent implements OnDestroy {
     this.reset(filterSelection(this.criteria()));
     this.open.set(false);
     this.toggleButton()?.nativeElement.focus({ preventScroll: true });
+    this.cancelled.emit();
   }
   toggleOpen() {
     if (this.open()) this.cancel();

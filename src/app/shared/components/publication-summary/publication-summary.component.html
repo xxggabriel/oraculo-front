@@ -10,11 +10,7 @@
     <span class="capitalize">{{
       publication().type ?? "Tipo não informado"
     }}</span>
-    <span>{{
-      publication().publicationDate
-        ? "Publicado em " + civilDate(publication().publicationDate)
-        : "Data de publicação não informada"
-    }}</span>
+    <span>{{ dateLabel() }}</span>
   </div>
   <h2
     class="mb-3 break-words text-[17px] font-semibold leading-7 text-brand-700 sm:text-lg"
