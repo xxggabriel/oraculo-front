@@ -22,6 +22,8 @@ O frontend não decide acesso, revisão, seleção ou denominadores. A API aplic
 
 CNJ tem campo de relação explícito e modo automático preserva a estratégia definida pelo backend. Palavras/Automático ignoram stopwords comuns em português na API, com proteção de negações e identificadores; frase exata e CNJ preservam o texto. A URL mantém a pesquisa digitada, e consultas somente com stopwords geram zero resultados. Texto vazio consulta o recorte. Filtros compartilham URL; cursores nunca entram na URL. Voltar reconsulta cursores em memória. A primeira página reabre o recorte com nova sessão, pois a API não publica um cursor inicial. Ao abrir detalhe a sessão é encerrada; voltar executa novamente o recorte. Erros de expiração conservam os filtros e permitem reinício.
 
+A primeira página de resultados é solicitada antes das facetas. As facetas usam `POST /api/v1/search/facets` sem bloquear a lista; a jurimetria usa `POST /api/v1/jurimetry/query` somente quando sua aba é aberta. A análise é reutilizada ao alternar abas no mesmo recorte, e critérios novos abortam as requisições anteriores e invalidam os dados. Se a aba permanecer aberta, a análise do novo recorte inicia após seus resultados. Erros de agregações permanecem independentes dos resultados.
+
 A busca revalida acesso na projeção, com contagens de um retrato PIT. Facetas e distribuições são consultas separadas da projeção atual e podem observar mudanças ocorridas entre operações; essa diferença é explicada na interface. Não há promessa de acesso imediato do ledger nem corpus congelado.
 
 ## Catálogo de fluxos

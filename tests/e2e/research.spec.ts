@@ -339,3 +339,38 @@ test("período personalizado exige as duas datas antes de aplicar", async ({
       url.searchParams.get("to") === "2026-10-11",
   );
 });
+
+test("busca carrega jurimetria apenas ao abrir a aba e reutiliza o recorte", async ({
+  page,
+}) => {
+  let analysisRequests = 0;
+  const requests: string[] = [];
+  page.on("request", (request) => {
+    const path = new URL(request.url()).pathname;
+    if (path.startsWith("/api/")) requests.push(path);
+    if (path === "/api/v1/jurimetry/query") analysisRequests++;
+  });
+  const facets = page.waitForResponse(
+    (response) => new URL(response.url()).pathname === "/api/v1/search/facets",
+  );
+  await page.goto("/?q=dano+moral");
+  await expect(page.locator(".publication-row").first()).toBeVisible();
+  await facets;
+  expect(analysisRequests).toBe(0);
+  expect(requests.indexOf("/api/v1/publications/search")).toBeLessThan(
+    requests.indexOf("/api/v1/search/facets"),
+  );
+  const analysis = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === "/api/v1/jurimetry/query",
+  );
+  await page
+    .getByRole("button", { name: "Jurimetria do recorte", exact: true })
+    .click();
+  expect((await analysis).status()).toBe(200);
+  await page.getByRole("button", { name: "Publicações", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Jurimetria do recorte", exact: true })
+    .click();
+  expect(analysisRequests).toBe(1);
+});

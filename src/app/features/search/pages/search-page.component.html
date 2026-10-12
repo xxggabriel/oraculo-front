@@ -30,7 +30,7 @@
         : 'border-transparent text-muted'
     "
     type="button"
-    (click)="activeTab.set('publications')"
+    (click)="selectTab('publications')"
     [attr.aria-pressed]="activeTab() === 'publications'"
   >
     Publicações
@@ -43,7 +43,7 @@
         : 'border-transparent text-muted'
     "
     type="button"
-    (click)="activeTab.set('analysis')"
+    (click)="selectTab('analysis')"
     [attr.aria-pressed]="activeTab() === 'analysis'"
   >
     Jurimetria do recorte
@@ -105,7 +105,7 @@
     } @else {
       <app-search-analysis
         [analysis]="vm.analysis()"
-        [loading]="vm.analysisLoading()"
+        [loading]="vm.loading() || vm.analysisLoading()"
         [error]="vm.analysisError()"
         [capabilities]="vm.capabilities()"
       />
