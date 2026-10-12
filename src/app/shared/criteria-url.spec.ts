@@ -2,6 +2,48 @@ import { describe, expect, it } from "vitest";
 import { initialCriteria } from "../core/search";
 import { criteriaFromParams, criteriaToParams } from "./criteria-url";
 
+describe("Coleção e ordenação da jurisprudência na URL", () => {
+  it("preserva critérios explícitos sem mudar a pesquisa de publicações", () => {
+    const legacy = criteriaFromParams(new URLSearchParams({ q: "mérito" }));
+    expect(legacy).not.toHaveProperty("collection");
+    expect(legacy).not.toHaveProperty("ranking");
+    expect(criteriaToParams(initialCriteria)).toMatchObject({
+      collection: null,
+      ranking: null,
+    });
+    for (const ranking of ["bm25", "rerank"] as const) {
+      const criteria = {
+        ...initialCriteria,
+        collection: "jurisprudence" as const,
+        ranking,
+      };
+      const params = criteriaToParams(criteria);
+      expect(
+        criteriaFromParams(
+          new URLSearchParams({
+            collection: String(params.collection),
+            ranking: String(params.ranking),
+          }),
+        ),
+      ).toMatchObject({ collection: "jurisprudence", ranking });
+    }
+  });
+  it("descarta valores desconhecidos e nunca restaura sessões ou cursores", () => {
+    const criteria = criteriaFromParams(
+      new URLSearchParams({
+        collection: "private",
+        ranking: "unknown",
+        sessionId: "secret",
+        cursor: "opaque",
+      }),
+    );
+    expect(criteria).not.toHaveProperty("collection");
+    expect(criteria).not.toHaveProperty("ranking");
+    expect(criteria).not.toHaveProperty("sessionId");
+    expect(criteria).not.toHaveProperty("cursor");
+  });
+});
+
 describe("Publicidade do processo na URL", () => {
   it("restaura públicos e privados, normaliza inválidos e omite a opção de ambos", () => {
     for (const visibility of ["public", "restricted"] as const) {

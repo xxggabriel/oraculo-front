@@ -17,6 +17,10 @@ Acesse `http://127.0.0.1:4200`. Inicie `../oraculo-back` separadamente na porta 
 
 A integração com o **Elasticsearch real do servidor `192.168.100.27`** está configurada no backend com HTTPS, certificado validado e chave somente de leitura. Antes de iniciar a API, execute `npm run es:tunnel -- up` em `../oraculo-back`. Com a API e o frontend ativos, `npm run smoke:live` no backend verifica o fluxo pela porta 4200, incluindo busca, paginação, detalhe, facetas e jurimetria. Veja [configuração e operação do acervo real](../oraculo-back/docs/live-integration.md). Os E2E abaixo exigem o perfil sintético separado e não devem ser executados contra o acervo real.
 
+## Pesquisa de jurisprudência
+
+Página `/jurisprudencia` com busca em ementa e texto da publicação, filtros combináveis, ementa como prévia padrão, fallback para publicação e highlights identificados por campo. Oferece relevância refinada por um reranker lexical em janela explícita e busca BM25 de todo o recorte. A ordem refinada fica estável durante a sessão; a API revalida acesso e revisão em cada página. Veja [contratos, limites e referências de projeto](docs/jurisprudence.md).
+
 ## Jurimetria por referências
 
 Nova página em `/jurimetria`, com condição de referências jurisprudenciais/normativas (ou ambas), política de validação, lista paginada e plots por tribunal, tipo, mês, presença e referências mais frequentes. Os gráficos usam a população completa admitida e permitem refino por tribunal/tipo. A consulta cruza referências no backend e revalida revisão/seleção/acesso.

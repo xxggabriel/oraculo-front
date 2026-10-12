@@ -50,6 +50,13 @@ import { RouterLink, RouterLinkActive } from "@angular/router";
             >Pesquisa</a
           >
           <a
+            routerLink="/jurisprudencia"
+            routerLinkActive="text-brand-700 font-semibold"
+            ariaCurrentWhenActive="page"
+            class="min-h-8 py-1 hover:text-brand-700"
+            >Jurisprudência</a
+          >
+          <a
             routerLink="/jurimetria"
             routerLinkActive="text-brand-700 font-semibold"
             ariaCurrentWhenActive="page"

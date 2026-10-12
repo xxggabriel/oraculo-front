@@ -196,9 +196,16 @@ export class PublicationDetailPage implements OnDestroy {
     return this.router.url.split("#")[0] ?? "";
   }
   returnRoute() {
-    return this.route.snapshot.queryParamMap.get("returnTo") === "jurimetria"
-      ? "/jurimetria"
-      : "/";
+    const context = this.route.snapshot.queryParamMap.get("returnTo");
+    if (context === "jurimetria") return "/jurimetria";
+    if (context === "jurisprudencia") return "/jurisprudencia";
+    return "/";
+  }
+  returnLabel() {
+    const route = this.returnRoute();
+    if (route === "/jurimetria") return "Voltar à jurimetria";
+    if (route === "/jurisprudencia") return "Voltar à jurisprudência";
+    return "Voltar à pesquisa";
   }
   async navigateTo(navigation: string | ReferenceNavigation) {
     const anchor =

@@ -144,3 +144,7 @@ Referências e atos/classificações mostram 5 itens inicialmente e revelam até
 O fluxo E2E de pessoas/OAB usa somente o cluster sintético: no back-end, execute `npm run test:seed:participants` conforme `docs/test-environment.md`, e inicie a API isolada. Com o front-end isolado e seu proxy apontando para essa API, execute `PARTICIPANT_FIXTURE=true FRONT_URL=http://127.0.0.1:4201 npm run test:e2e -- -g 'filtros avançados'`. O teste é opt-in porque o seed canônico não inclui os participantes dessa fixture especial. Restaure o seed com `npm run test:seed` no back-end ao terminar.
 
 A UF da OAB usa um select com os 26 estados, Distrito Federal e “Todos os estados”. Esta última opção envia `oabState: null`, removendo somente a restrição de UF e preservando nome/número da OAB. A seleção continua no rascunho até Aplicar filtros.
+
+## Pesquisa de jurisprudência
+
+`features/jurisprudence/pages/JurisprudencePageComponent` compõe busca, filtros e listagem na rota `/jurisprudencia`, reutilizando `SearchFacade` para sessões e cancelamento. `JurisprudenceResultComponent` recebe a publicação e critérios do detalhe e apresenta ementa, fallback, destaques separados e proveniência. O modo refinado sinaliza a janela de candidatos; BM25 e data permitem consultar todo o recorte. [Contrato, referências de projeto e pontos de evolução](jurisprudence.md).

@@ -54,6 +54,20 @@ function setup() {
 }
 afterEach(() => TestBed.resetTestingModule());
 describe("PublicationDetailPage e recomendações independentes", () => {
+  it("restaura a jurisprudência como contexto e permite apenas rotas conhecidas", () => {
+    const { page } = setup();
+    for (const [returnTo, expectedRoute, label] of [
+      ["jurisprudencia", "/jurisprudencia", "Voltar à jurisprudência"],
+      ["jurimetria", "/jurimetria", "Voltar à jurimetria"],
+      ["https://example.com", "/", "Voltar à pesquisa"],
+      ["//example.com", "/", "Voltar à pesquisa"],
+    ]) {
+      page.route.snapshot.queryParamMap = convertToParamMap({ returnTo });
+      expect(page.returnRoute()).toBe(expectedRoute);
+      expect(page.returnLabel()).toBe(label);
+    }
+    page.ngOnDestroy();
+  });
   it("preserva o detalhe quando apenas as recomendações falham", async () => {
     const { page, execute } = setup();
     execute.mockRejectedValueOnce(new SearchFailure("RELATED_ERROR", "Erro."));

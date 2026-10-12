@@ -48,6 +48,12 @@ export function criteriaFromParams(params: QueryParamsReader): Criteria {
     missingDates:
       missing === "only" || missing === "exclude" ? missing : "include",
     sort: params.get("sort") === "date_desc" ? "date_desc" : "relevance",
+    ...(params.get("collection") === "jurisprudence"
+      ? { collection: "jurisprudence" as const }
+      : {}),
+    ...(params.get("ranking") === "bm25" || params.get("ranking") === "rerank"
+      ? { ranking: params.get("ranking") as "bm25" | "rerank" }
+      : {}),
   };
 }
 export function criteriaToParams(c: Criteria, size = 10) {
@@ -72,5 +78,7 @@ export function criteriaToParams(c: Criteria, size = 10) {
     to: c.to,
     missingDates: c.missingDates === "include" ? null : c.missingDates,
     sort: c.sort === "relevance" ? null : c.sort,
+    collection: c.collection ?? null,
+    ranking: c.ranking ?? null,
   };
 }
