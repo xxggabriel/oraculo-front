@@ -42,6 +42,7 @@ import {
 export class FilterPanelComponent implements OnDestroy {
   readonly criteria = input.required<Criteria>();
   readonly idPrefix = input("filter");
+  readonly embedded = input(false);
   readonly toggleButton =
     viewChild<ElementRef<HTMLButtonElement>>("toggleButton");
   readonly facets = input<readonly Distribution[]>([]);
@@ -49,6 +50,7 @@ export class FilterPanelComponent implements OnDestroy {
   readonly loading = input(false);
   readonly apply = output<FilterSelection>();
   readonly clear = output<void>();
+  readonly cancelled = output<void>();
   readonly open = signal(false);
   readonly error = signal<string | null>(null);
   readonly preset = signal<DatePreset>("all");
@@ -212,6 +214,7 @@ export class FilterPanelComponent implements OnDestroy {
     this.reset(filterSelection(this.criteria()));
     this.open.set(false);
     this.toggleButton()?.nativeElement.focus({ preventScroll: true });
+    this.cancelled.emit();
   }
   toggleOpen() {
     if (this.open()) this.cancel();

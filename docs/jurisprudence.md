@@ -6,6 +6,10 @@ A página `/jurisprudencia` pesquisa ementas próprias e o texto das publicaçõ
 
 A página reutiliza `SearchFacade` para cancelamento por geração, cursores em memória, revalidação e fechamento de sessões. Critérios aplicados ficam na URL; os filtros conservam rascunho separado. O link do detalhe recebe `returnTo=jurisprudencia`, reconhecido por uma lista explícita de destinos internos.
 
+A interface usa uma coluna de resultados e mantém a busca como ação principal. “Opções de busca” revela os modos de palavras, frase exata e CNJ. “Filtros” abre um diálogo nativo com rascunho, aplicação explícita, fechamento por Escape/área externa e retorno do foco ao botão. O painel prende o foco e bloqueia a rolagem do fundo; fechar descarta alterações não aplicadas. Filtros aplicados permanecem visíveis e removíveis na listagem.
+
+A ordenação é um único controle: **Mais relevantes** usa reranking, **Relevância (todos)** usa BM25 e **Mais recentes** usa data com BM25. O seletor de quantidade fica junto da paginação. A explicação da estratégia e capacidades fica em **Sobre os resultados**, enquanto a limitação de candidatos continua visível quando há truncamento.
+
 `JurisprudenceResultComponent` recebe somente modelos próprios de `core`. Exibe a prévia de `ementa_text` quando disponível, ou o texto da publicação. Não promove ementas citadas/incertas a ementa própria. O produtor entrega proveniência e estado de revisão do recorte; revisão da extração não certifica validade jurídica.
 
 A prévia começa no início do texto, preservando a leitura da ementa. Correspondências fora da prévia da ementa aparecem em um bloco identificado. Quando a correspondência está apenas no corpo, a ementa permanece visível e o trecho da publicação é apresentado separadamente. Trechos já contidos na prévia não são repetidos. Highlights usam partes estruturadas e o parser compartilhado de publicações, sem `innerHTML`. Prévia limitada tem aviso e acesso ao texto completo; expandir exibe somente o conteúdo recebido, sem ocultar a limitação do produtor.

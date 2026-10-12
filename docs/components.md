@@ -148,3 +148,7 @@ A UF da OAB usa um select com os 26 estados, Distrito Federal e “Todos os esta
 ## Pesquisa de jurisprudência
 
 `features/jurisprudence/pages/JurisprudencePageComponent` compõe busca, filtros e listagem na rota `/jurisprudencia`, reutilizando `SearchFacade` para sessões e cancelamento. `JurisprudenceResultComponent` recebe a publicação e critérios do detalhe e apresenta ementa, fallback, destaques separados e proveniência. O modo refinado sinaliza a janela de candidatos; BM25 e data permitem consultar todo o recorte. [Contrato, referências de projeto e pontos de evolução](jurisprudence.md).
+
+### Apresentação compacta e filtros em diálogo
+
+`SearchQueryComponent.compact` recolhe modos especiais em “Opções de busca” e mantém o botão Pesquisar visível no celular. O padrão `false` conserva a apresentação das demais páginas. `FilterPanelComponent.embedded` torna o formulário visível em qualquer largura para uso dentro de um diálogo, sem o botão de abertura interno; `cancelled` comunica o descarte ao coordenador. O padrão `false` preserva o painel lateral/responsivo existente. A página de jurisprudência coordena o diálogo nativo, foco, fechamento e rolagem e mantém os filtros aplicados na URL.

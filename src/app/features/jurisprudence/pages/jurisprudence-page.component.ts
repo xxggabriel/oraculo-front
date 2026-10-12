@@ -3,11 +3,19 @@ import {
   criteriaToParams,
 } from "../../../shared/criteria-url";
 
-import { Component, OnDestroy, computed, inject, signal } from "@angular/core";
+import {
+  Component,
+  ElementRef,
+  OnDestroy,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from "@angular/core";
 import { DOCUMENT } from "@angular/common";
 import { ActivatedRoute, Router } from "@angular/router";
 import { Subscription } from "rxjs";
-import { Criteria, Sort } from "../../../core/search";
+import { Criteria } from "../../../core/search";
 import { SearchFacade } from "../../search/state/search.facade";
 import { SearchQueryComponent } from "../../../shared/components/search-query/search-query.component";
 import { SearchErrorComponent } from "../../../shared/components/search-error/search-error.component";
@@ -54,9 +62,23 @@ export class JurisprudencePageComponent implements OnDestroy {
     returnTo: "jurisprudencia",
   }));
   readonly appliedFilters = computed(() => filterChips(this.vm.criteria()));
+  readonly ordering = computed(() =>
+    this.vm.criteria().sort === "date_desc"
+      ? "date_desc"
+      : this.vm.criteria().ranking === "bm25"
+        ? "bm25"
+        : "rerank",
+  );
+  readonly filterDialog =
+    viewChild<ElementRef<HTMLDialogElement>>("filterDialog");
+  readonly filtersButton =
+    viewChild<ElementRef<HTMLButtonElement>>("filtersButton");
+  readonly filters = viewChild(FilterPanelComponent);
+  private previousOverflow: string | null = null;
   private readonly subscription: Subscription;
   constructor() {
     this.subscription = this.route.queryParamMap.subscribe((params) => {
+      this.closeFilters(false);
       const size = Number(params.get("size"));
       void this.vm.search(
         {
@@ -72,15 +94,47 @@ export class JurisprudencePageComponent implements OnDestroy {
       );
     });
   }
-  changeRanking(event: Event) {
+  changeOrdering(event: Event) {
+    const value = (event.target as HTMLSelectElement).value;
     this.navigate({
       ...this.vm.criteria(),
-      ranking:
-        (event.target as HTMLSelectElement).value === "bm25"
-          ? "bm25"
-          : "rerank",
-      sort: "relevance",
+      sort: value === "date_desc" ? "date_desc" : "relevance",
+      ranking: value === "rerank" ? "rerank" : "bm25",
     });
+  }
+  openFilters() {
+    const dialog = this.filterDialog()?.nativeElement;
+    if (!dialog || dialog.open) return;
+    this.previousOverflow = this.document.body.style.overflow;
+    this.document.body.style.overflow = "hidden";
+    this.filters()?.open.set(true);
+    dialog.showModal();
+  }
+  dismissFilters(event?: Event) {
+    event?.preventDefault();
+    this.filters()?.cancel();
+  }
+  closeFilters(restoreFocus = true) {
+    this.filterDialog()?.nativeElement.close();
+    this.filters()?.open.set(false);
+    if (this.previousOverflow !== null) {
+      this.document.body.style.overflow = this.previousOverflow;
+      this.previousOverflow = null;
+    }
+    if (restoreFocus)
+      this.filtersButton()?.nativeElement.focus({ preventScroll: true });
+  }
+  dialogClick(event: MouseEvent) {
+    const dialog = this.filterDialog()?.nativeElement;
+    if (!dialog || event.target !== dialog) return;
+    const bounds = dialog.getBoundingClientRect();
+    if (
+      event.clientX < bounds.left ||
+      event.clientX > bounds.right ||
+      event.clientY < bounds.top ||
+      event.clientY > bounds.bottom
+    )
+      this.dismissFilters();
   }
   changeRankingToLexical() {
     this.navigate({
@@ -88,13 +142,6 @@ export class JurisprudencePageComponent implements OnDestroy {
       ranking: "bm25",
       sort: "relevance",
     });
-  }
-  changeSortEvent(event: Event) {
-    this.changeSort(
-      (event.target as HTMLSelectElement).value === "date_desc"
-        ? "date_desc"
-        : "relevance",
-    );
   }
   changeSizeEvent(event: Event) {
     const size = Number((event.target as HTMLSelectElement).value);
@@ -115,6 +162,7 @@ export class JurisprudencePageComponent implements OnDestroy {
     this.navigate({ ...this.vm.criteria(), ...query });
   }
   applyFilters(filters: FilterSelection) {
+    this.closeFilters(false);
     this.navigate(
       { ...this.vm.criteria(), ...filters },
       this.vm.pageSize(),
@@ -129,13 +177,6 @@ export class JurisprudencePageComponent implements OnDestroy {
   }
   changeSize(size: number) {
     this.navigate(this.vm.criteria(), size);
-  }
-  changeSort(sort: Sort) {
-    this.navigate({
-      ...this.vm.criteria(),
-      sort,
-      ranking: sort === "date_desc" ? "bm25" : this.vm.criteria().ranking,
-    });
   }
   retry() {
     void this.vm.search(this.vm.criteria(), this.vm.pageSize());
@@ -159,6 +200,7 @@ export class JurisprudencePageComponent implements OnDestroy {
     });
   }
   ngOnDestroy() {
+    this.closeFilters(false);
     this.subscription.unsubscribe();
   }
 }

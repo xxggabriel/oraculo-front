@@ -11,6 +11,7 @@ import { Criteria, Mode } from "../../../core/search";
 export class SearchQueryComponent {
   readonly criteria = input.required<Criteria>();
   readonly loading = input(false);
+  readonly compact = input(false);
   readonly search = output<Pick<Criteria, "q" | "mode">>();
   readonly form = new FormGroup({
     q: new FormControl("", { nonNullable: true }),
