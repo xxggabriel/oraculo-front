@@ -1,4 +1,17 @@
 import { Publication } from "./search";
+export interface TimelinePublication extends Publication {
+  readonly sourceDocumentType?: string | null;
+  readonly recipients?:
+    | readonly { readonly name: string | null; readonly pole: string | null }[]
+    | null;
+  readonly attorneys?:
+    | readonly {
+        readonly name: string | null;
+        readonly oabNumber: string | null;
+        readonly oabState: string | null;
+      }[]
+    | null;
+}
 export interface PublicationTimelineQuery {
   readonly cnj: string | null;
   readonly page: number;
@@ -10,7 +23,7 @@ export interface PublicationTimeline {
   readonly publicationId: string;
   readonly processes: readonly string[];
   readonly selectedProcess: string | null;
-  readonly publications: readonly Publication[];
+  readonly publications: readonly TimelinePublication[];
   readonly page: number;
   readonly pageSize: 20;
   readonly total: { readonly value: number; readonly relation: "eq" | "gte" };

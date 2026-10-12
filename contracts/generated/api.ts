@@ -490,7 +490,7 @@ export interface components {
             publicationId: string;
             processes: string[];
             selectedProcess: string | null;
-            items: components["schemas"]["Summary"][];
+            items: components["schemas"]["TimelineItem"][];
             page: number;
             /** @constant */
             pageSize: 20;
@@ -542,6 +542,32 @@ export interface components {
             classes: components["schemas"]["ProcessClassDistribution"][];
             missingClassCode: number;
             missingClassName: number;
+        };
+        TimelineRecipient: {
+            name: string | null;
+            pole: string | null;
+        };
+        TimelineAttorney: {
+            name: string | null;
+            oabNumber: string | null;
+            oabState: string | null;
+        };
+        TimelineItem: {
+            id: string;
+            revisionId: string;
+            textVersionId: string;
+            court: string | null;
+            documentType: string | null;
+            publicationDate: string | null;
+            availabilityDate: string | null;
+            sourceDate: string | null;
+            processes: string[];
+            snippets: components["schemas"]["Snippet"][];
+            score: number | null;
+            recipients?: components["schemas"]["TimelineRecipient"][] | null;
+            attorneys?: components["schemas"]["TimelineAttorney"][] | null;
+            /** @description Tipo de documento literal informado pela fonte em extensions.tipoDocumento; distinto do tipo de comunicação. */
+            sourceDocumentType?: string | null;
         };
     };
     responses: never;

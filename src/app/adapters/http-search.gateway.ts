@@ -379,7 +379,13 @@ export class HttpSearchGateway
       validators.validatePublicationTimelineResponse,
       signal,
     );
-    const publications = r.items.map(publication);
+    const publications = r.items.map((item) => ({
+      ...publication(item),
+      sourceDocumentType: item.sourceDocumentType ?? null,
+      recipients:
+        item.recipients?.map((recipient) => ({ ...recipient })) ?? null,
+      attorneys: item.attorneys?.map((attorney) => ({ ...attorney })) ?? null,
+    }));
     const ids = publications.map((item) => item.id);
     const defaultProcess = [...r.processes].sort()[0] ?? null;
     if (

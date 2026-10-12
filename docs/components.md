@@ -130,3 +130,9 @@ Para usar o comportamento genérico em outra página, projete um link ou botão 
 `npm run check` verifica contratos, fronteiras, lint, tipos, testes e build. Os testes de componentes exercitam rascunho/cancelamento, facetas, presets civis, Unicode, sobreposição, evidências incompatíveis, texto seguro e destinos dos links. Os E2E com fixtures verificam pesquisa/paginação, filtros desktop/mobile, aplicação e cancelamento, período personalizado e texto → referência → trecho, inclusive após recarregar a URL.
 
 Para usar um frontend de fixtures já ativo em outra porta, execute `FRONT_URL=http://127.0.0.1:4201 npm run test:e2e`. Esse frontend precisa ter seu próprio proxy para a API sintética. Não execute os testes que esperam `pub-001` contra o backend do acervo real. A sessão real na porta 4200 mantém seu proxy para a API 3000 e o Elasticsearch remoto.
+
+## Carga e expansão das seções da publicação
+
+`LoadingSkeletonComponent` recebe `label` e `count` (5 por padrão). As linhas são decorativas, com status acessível e animação somente quando a preferência de movimento permite. O detalhe apresenta skeletons de timeline, referências e atos enquanto aguarda a API; a timeline mantém sua própria carga.
+
+Referências e atos/classificações mostram 5 itens inicialmente e revelam até 10 adicionais por clique, até o fim da lista recebida no detalhe. Não fazem requests pelos componentes compartilhados. A paginação reinicia ao trocar os dados/publicação. Uma referência ativa fora do limite revela o bloco correspondente para preservar navegação e foco. A timeline usa buffer/páginas da facade e exibe o tipo de documento da fonte, sem trecho de texto.

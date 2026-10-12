@@ -40,3 +40,6 @@ export declare const validateJudicialOrganDistribution: (value: unknown) => valu
 export declare const validateJudicialCourtDistribution: (value: unknown) => value is components['schemas']['JudicialCourtDistribution'];
 export declare const validateProcessClassDistribution: (value: unknown) => value is components['schemas']['ProcessClassDistribution'];
 export declare const validateJudicialDistribution: (value: unknown) => value is components['schemas']['JudicialDistribution'];
+export declare const validateTimelineRecipient: (value: unknown) => value is components['schemas']['TimelineRecipient'];
+export declare const validateTimelineAttorney: (value: unknown) => value is components['schemas']['TimelineAttorney'];
+export declare const validateTimelineItem: (value: unknown) => value is components['schemas']['TimelineItem'];

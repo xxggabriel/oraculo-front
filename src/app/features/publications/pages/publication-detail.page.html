@@ -7,7 +7,18 @@
     'Voltar à jurimetria' : 'Voltar à pesquisa' }}</a
   >
   @if (loading()) {
-  <p class="py-12 text-sm text-muted" role="status">Carregando publicação…</p>
+  <app-loading-skeleton label="Carregando publicação…" [count]="2" />
+  <app-publication-timeline
+    [currentPublication]="route.snapshot.paramMap.get('id') ?? ''"
+    [loading]="true"
+  />
+  <app-selected-outputs [outputs]="[]" [loading]="true" />
+  <app-publication-references
+    [references]="[]"
+    [text]="''"
+    [identity]="{id: '', revision: '', textVersion: ''}"
+    [loading]="true"
+  />
   } @if (error(); as error) {
   <section class="min-w-0 py-12" role="alert">
     <h1 class="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
@@ -122,6 +133,7 @@
     [currentPublication]="d.publication.id"
     [selectedProcess]="timeline.selectedProcess()"
     [loading]="timeline.loading()"
+    [hasMore]="timeline.hasMore()"
     [error]="timeline.error()"
     [queryParams]="route.snapshot.queryParams"
     (selectProcess)="timeline.select($event)"
@@ -136,7 +148,7 @@
     (retry)="retryRelated()"
   />
 
-  <app-selected-outputs [outputs]="d.outputs" />
+  <app-selected-outputs [outputs]="d.outputs" [identity]="d.publication" />
   <app-publication-references
     [references]="d.references"
     [text]="d.text"
