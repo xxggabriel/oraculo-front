@@ -9,6 +9,10 @@ export interface Criteria {
   readonly courts: readonly string[];
   readonly documentTypes: readonly string[];
   readonly visibility?: Visibility;
+  readonly partyName?: string | null;
+  readonly attorneyName?: string | null;
+  readonly oabNumber?: string | null;
+  readonly oabState?: string | null;
   readonly process: {
     readonly cnj: string;
     readonly relation: "any" | "publication_process" | "referenced";

@@ -18,3 +18,31 @@ describe("Publicidade do processo na URL", () => {
     ).toBe("both");
   });
 });
+
+describe("Pessoas e OAB na URL", () => {
+  it("preserva todos os filtros e zeros da inscrição após recarregar", () => {
+    const fields = {
+      partyName: "Maria Silva",
+      attorneyName: "João Lima",
+      oabNumber: "00123A",
+      oabState: "GO",
+    };
+    const params = criteriaToParams({ ...initialCriteria, ...fields });
+    expect(
+      criteriaFromParams(
+        new URLSearchParams(
+          Object.fromEntries(
+            Object.entries(params)
+              .filter(([, value]) => value !== null)
+              .map(([key, value]) => [key, String(value)]),
+          ),
+        ),
+      ),
+    ).toMatchObject(fields);
+    expect(
+      criteriaFromParams(
+        new URLSearchParams({ attorneyName: "  ", oabState: "go" }),
+      ),
+    ).toMatchObject({ attorneyName: null, oabState: "GO" });
+  });
+});

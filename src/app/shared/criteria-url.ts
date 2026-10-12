@@ -28,6 +28,10 @@ export function criteriaFromParams(params: QueryParamsReader): Criteria {
       params.get("visibility") === "restricted"
         ? (params.get("visibility") as "public" | "restricted")
         : "both",
+    partyName: params.get("partyName")?.trim() || null,
+    attorneyName: params.get("attorneyName")?.trim() || null,
+    oabNumber: params.get("oabNumber")?.trim() || null,
+    oabState: params.get("oabState")?.trim().toUpperCase() || null,
     process: cnj
       ? {
           cnj,
@@ -54,6 +58,10 @@ export function criteriaToParams(c: Criteria, size = 10) {
     courts: c.courts.join(",") || null,
     types: c.documentTypes.join(",") || null,
     visibility: c.visibility && c.visibility !== "both" ? c.visibility : null,
+    partyName: c.partyName || null,
+    attorneyName: c.attorneyName || null,
+    oabNumber: c.oabNumber || null,
+    oabState: c.oabState || null,
     process: c.process?.cnj ?? null,
     relation:
       c.process && c.process.relation !== "publication_process"

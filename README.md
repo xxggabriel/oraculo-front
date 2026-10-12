@@ -43,7 +43,7 @@ As páginas foram separadas de estado e apresentação. Shell, filtros, resumos,
 
 No detalhe, referências jurisprudenciais e normativas comprovadas recebem links no próprio texto. Clicar leva aos seus metadados e evidências; o retorno volta à ocorrência clicada. A associação usa os offsets Unicode da API e valida publicação, revisão, versão de texto e superfície. Sobreposições mantêm todos os destinos e não há execução de HTML. Como a API não entrega URLs oficiais resolvidas, o destino é a referência interna da publicação.
 
-O bloco **Dados da publicação** apresenta relator, órgão judicial, classe processual, tipo de documento e grau de instância recebidos da fonte, indicando ausência ou ambiguidade. O filtro **Publicidade do processo** permite escolher públicos, privados/restritos ou ambos na pesquisa e jurimetria, preservando a seleção na URL e nos links. O acesso atual permite apenas publicações públicas: privados retorna vazio com explicação, e ambos consulta somente a população disponível. Não concede acesso a material em segredo de justiça.
+O bloco **Dados da publicação** apresenta relator, órgão judicial, classe processual, tipo de documento e grau de instância recebidos da fonte, indicando ausência ou ambiguidade. Os filtros avançados permitem buscar pelo nome das partes, nome do advogado ou número da OAB, com UF opcional vinculada ao mesmo advogado. A URL preserva esses critérios. O controle de publicidade foi removido do painel; URLs legadas continuam respeitando os critérios de acesso da API. Na lista, uma data disponível somente como disponibilização recebe esse rótulo e não é apresentada como data de publicação.
 
 A interna também apresenta até quatro [publicações relacionadas](docs/related-publications.md), com o motivo de cada sugestão e carregamento independente. Um caso de uso e uma porta específicos isolam a estratégia para evoluções futuras.
 
@@ -51,7 +51,7 @@ A interna apresenta a [linha do tempo das publicações do processo](docs/public
 
 ## Experiência
 
-A URL conserva texto, modo, tribunal, tipo, CNJ/relação, eixo temporal, datas, tratamento de ausentes, ordenação e tamanho de página. Cursores e IDs de sessão permanecem em memória. O histórico de cursores permite voltar reconsultando a API para revalidar o acesso, sem offsets. Voltar à primeira página reabre o recorte em uma nova sessão; novas condições também encerram a sessão anterior. A rota de detalhe carrega sob demanda e mantém o recorte no link de retorno.
+A URL conserva texto, modo, tribunal, tipo, nomes das partes/advogados, OAB/UF, CNJ/relação, eixo temporal, datas, tratamento de ausentes, ordenação e tamanho de página. Cursores e IDs de sessão permanecem em memória. O histórico de cursores permite voltar reconsultando a API para revalidar o acesso, sem offsets. Voltar à primeira página reabre o recorte em uma nova sessão; novas condições também encerram a sessão anterior. A rota de detalhe carrega sob demanda e mantém o recorte no link de retorno.
 
 Consultas são explícitas por envio do formulário. Requisições superadas são abortadas e identificadas por geração; respostas antigas não sobrescrevem o estado atual. Não há busca durante digitação, portanto não há debounce. Signals coordenam a apresentação e RxJS observa somente as mudanças de rota. A destruição do workspace cancela requisições e solicita o encerramento da sessão. Esse encerramento é best effort; o backend limita o tempo de vida e a quantidade de sessões quando a comunicação falha.
 

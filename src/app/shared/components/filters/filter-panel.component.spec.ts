@@ -163,3 +163,66 @@ describe("Rascunho dos filtros", () => {
     expect(panel.pending()).toBe(false);
   });
 });
+
+describe("Filtros de pessoas", () => {
+  it("aplica os nomes e OAB, cancela o rascunho e reinicia o contexto somente após aplicação", () => {
+    const { panel, criteria } = setup();
+    const applied = vi.fn();
+    panel.apply.subscribe(applied);
+    const context = panel.contextKey();
+    panel.form.patchValue({
+      partyName: " Maria Silva ",
+      attorneyName: "João Lima",
+      oabNumber: "00123A",
+      oabState: "go",
+    });
+    expect(panel.contextKey()).toBe(context);
+    panel.submit();
+    const filters = applied.mock.calls[0][0];
+    expect(filters).toMatchObject({
+      partyName: "Maria Silva",
+      attorneyName: "João Lima",
+      oabNumber: "00123A",
+      oabState: "GO",
+    });
+    criteria.set({ ...criteria(), ...filters });
+    TestBed.tick();
+    expect(panel.contextKey()).not.toBe(context);
+    panel.form.controls.partyName.setValue("Outra parte");
+    panel.cancel();
+    expect(panel.form.controls.partyName.value).toBe("Maria Silva");
+    panel.clearFilters();
+    expect(panel.draft()).toMatchObject({
+      partyName: null,
+      attorneyName: null,
+      oabNumber: null,
+      oabState: null,
+    });
+  });
+  it("oferece todos os estados e DF e remove a restrição de UF", () => {
+    const { panel } = setup();
+    expect(panel.brazilianStates).toHaveLength(27);
+    expect(new Set(panel.brazilianStates.map((s) => s.code)).size).toBe(27);
+    expect(panel.brazilianStates.some((s) => s.code === "DF")).toBe(true);
+    const applied = vi.fn();
+    panel.apply.subscribe(applied);
+    panel.form.patchValue({ attorneyName: "Ana Souza", oabState: "GO" });
+    panel.submit();
+    expect(applied.mock.calls[0][0].oabState).toBe("GO");
+    panel.form.controls.oabState.setValue("");
+    panel.submit();
+    expect(applied.mock.calls[1][0]).toMatchObject({
+      attorneyName: "Ana Souza",
+      oabState: null,
+    });
+  });
+  it("informa erro para UF incompleta", () => {
+    const { panel } = setup();
+    const applied = vi.fn();
+    panel.apply.subscribe(applied);
+    panel.form.patchValue({ oabNumber: "123", oabState: "G" });
+    panel.submit();
+    expect(applied).not.toHaveBeenCalled();
+    expect(panel.error()).toContain("UF válida");
+  });
+});

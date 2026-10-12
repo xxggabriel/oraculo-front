@@ -39,30 +39,6 @@
   <p class="text-xs leading-5 text-muted">
     Escolha os valores e aplique para atualizar o recorte.
   </p>
-  <div>
-    <label class="mb-1.5 block text-sm font-semibold" [for]="id('visibility')">
-      Publicidade do processo
-    </label>
-    <select
-      [class]="inputClass"
-      [id]="id('visibility')"
-      formControlName="visibility"
-      [attr.aria-describedby]="id('visibility-help')"
-    >
-      <option value="both">Públicos e privados</option>
-      <option value="public">Somente públicos</option>
-      <option value="restricted">Somente privados (restritos)</option>
-    </select>
-    <p [id]="id('visibility-help')" class="mt-2 text-xs leading-5 text-muted">
-      Este acesso permite consultar apenas publicações públicas.
-      @if (draft().visibility === "restricted") {
-        Publicações privadas ou em segredo de justiça não estão disponíveis
-        neste acesso.
-      } @else if (draft().visibility === "both") {
-        A opção de ambos respeita essa disponibilidade.
-      }
-    </p>
-  </div>
   <app-facet-select
     label="Tribunal"
     [fieldId]="id('courts')"
@@ -209,6 +185,82 @@
           <option value="any">Qualquer relação</option>
         </select>
       </div>
+    </div>
+    <div class="mt-4 space-y-3">
+      <div>
+        <label class="mb-1.5 block text-xs text-muted" [for]="id('partyName')"
+          >Nome das partes</label
+        >
+        <input
+          [class]="inputClass"
+          [id]="id('partyName')"
+          formControlName="partyName"
+          [readOnly]="!available('partyNameFilter')"
+          type="text"
+          maxlength="256"
+        />
+      </div>
+      <div>
+        <label
+          class="mb-1.5 block text-xs text-muted"
+          [for]="id('attorneyName')"
+          >Nome do advogado</label
+        >
+        <input
+          [class]="inputClass"
+          [id]="id('attorneyName')"
+          formControlName="attorneyName"
+          [readOnly]="!available('attorneyNameFilter')"
+          type="text"
+          maxlength="256"
+        />
+      </div>
+      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div>
+          <label class="mb-1.5 block text-xs text-muted" [for]="id('oabNumber')"
+            >Número da OAB</label
+          >
+          <input
+            [class]="inputClass"
+            [id]="id('oabNumber')"
+            formControlName="oabNumber"
+            [readOnly]="!available('oabFilter')"
+            type="text"
+            maxlength="64"
+          />
+        </div>
+        <div>
+          <label class="mb-1.5 block text-xs text-muted" [for]="id('oabState')"
+            >UF da OAB</label
+          >
+          <select
+            [class]="inputClass"
+            [id]="id('oabState')"
+            formControlName="oabState"
+            [attr.disabled]="!available('oabFilter') ? '' : null"
+          >
+            <option value="">Todos os estados</option>
+            @for (state of brazilianStates; track state.code) {
+              <option [value]="state.code">
+                {{ state.code }} — {{ state.name }}
+              </option>
+            }
+          </select>
+        </div>
+      </div>
+      @for (
+        capability of ["partyNameFilter", "attorneyNameFilter", "oabFilter"];
+        track capability
+      ) {
+        @if (unavailableReason(capability); as reason) {
+          <p class="text-xs leading-5 text-muted">{{ reason }}</p>
+        }
+      }
+      <p class="text-xs leading-5 text-muted">
+        Os nomes buscam todos os termos informados. A OAB corresponde ao número
+        exato, preservando zeros iniciais e sufixos. A UF é opcional e se refere
+        ao mesmo advogado.
+      </p>
     </div>
   </details>
   <div class="sticky bottom-0 border-t border-line bg-white pb-2 pt-4">

@@ -17,6 +17,14 @@ export class PublicationSummaryComponent {
   readonly snippets = computed(() =>
     this.publication().snippets.map(snippetContent),
   );
+  readonly dateLabel = computed(() => {
+    const p = this.publication();
+    if (p.publicationDate)
+      return `Publicado em ${civilDate(p.publicationDate)}`;
+    if (p.availabilityDate)
+      return `Disponibilizado em ${civilDate(p.availabilityDate)} · Data de publicação não informada`;
+    return "Data de publicação não informada";
+  });
   readonly civilDate = civilDate;
   readonly processNumber = processNumber;
 }

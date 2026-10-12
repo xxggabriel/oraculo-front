@@ -1182,6 +1182,58 @@
               "both"
             ],
             "description": "Publicidade do processo; a omissão é normalizada para both. Sempre intersectada com a população autorizada. Este acesso entrega somente publicações públicas/ativas; restricted retorna vazio e both não amplia autorização."
+          },
+          "partyName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Nome de parte destinatária: todos os termos no mesmo destinatário, sem buscar no corpo."
+          },
+          "attorneyName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Nome de advogado destinatário: todos os termos no mesmo advogado da OAB informada."
+          },
+          "oabNumber": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Número de OAB exato após remover espaços, pontos, barras e hífens; preserva zeros e sufixos."
+          },
+          "oabState": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "UF da OAB, duas letras; exige número ou nome de advogado e correlaciona o mesmo registro."
           }
         },
         "required": [
@@ -2148,7 +2200,10 @@
               "decisionMetrics",
               "exactProcessCount",
               "ledgerAccess",
-              "frozenCorpus"
+              "frozenCorpus",
+              "partyNameFilter",
+              "attorneyNameFilter",
+              "oabFilter"
             ]
           },
           "available": {

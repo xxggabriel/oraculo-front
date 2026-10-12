@@ -33,6 +33,10 @@ function criteriaToApi(c: Criteria): Api["Criteria"] {
   return {
     ...c,
     visibility: c.visibility ?? "both",
+    partyName: c.partyName ?? null,
+    attorneyName: c.attorneyName ?? null,
+    oabNumber: c.oabNumber ?? null,
+    oabState: c.oabState ?? null,
     courts: [...c.courts],
     documentTypes: [...c.documentTypes],
     process: c.process ? { ...c.process } : null,

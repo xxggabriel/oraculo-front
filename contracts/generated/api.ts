@@ -204,6 +204,14 @@ export interface components {
              * @enum {string}
              */
             visibility?: "public" | "restricted" | "both";
+            /** @description Nome de parte destinatária: todos os termos no mesmo destinatário, sem buscar no corpo. */
+            partyName?: string | null;
+            /** @description Nome de advogado destinatário: todos os termos no mesmo advogado da OAB informada. */
+            attorneyName?: string | null;
+            /** @description Número de OAB exato após remover espaços, pontos, barras e hífens; preserva zeros e sufixos. */
+            oabNumber?: string | null;
+            /** @description UF da OAB, duas letras; exige número ou nome de advogado e correlaciona o mesmo registro. */
+            oabState?: string | null;
         };
         SearchRequest: {
             criteria: components["schemas"]["Criteria"];
@@ -375,7 +383,7 @@ export interface components {
         };
         Feature: {
             /** @enum {string} */
-            name: "search" | "courtFilter" | "documentTypeFilter" | "publicationDate" | "availabilityDate" | "sourceDate" | "facets" | "publicationMetrics" | "acts" | "decisionUnits" | "classifications" | "citations" | "normativeReferences" | "decisionMetrics" | "exactProcessCount" | "ledgerAccess" | "frozenCorpus";
+            name: "search" | "courtFilter" | "documentTypeFilter" | "publicationDate" | "availabilityDate" | "sourceDate" | "facets" | "publicationMetrics" | "acts" | "decisionUnits" | "classifications" | "citations" | "normativeReferences" | "decisionMetrics" | "exactProcessCount" | "ledgerAccess" | "frozenCorpus" | "partyNameFilter" | "attorneyNameFilter" | "oabFilter";
             available: boolean;
             reason: string | null;
         };

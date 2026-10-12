@@ -50,6 +50,46 @@ describe("HTTP boundary e contrato gerado", () => {
       (await gateway.detail("pub-001", new AbortController().signal)).metadata,
     ).toBeNull();
   });
+  it("envia filtros de pessoas e OAB preservando zeros e recebe os mesmos critérios", async () => {
+    const fields = {
+      partyName: "Maria Silva",
+      attorneyName: "João Lima",
+      oabNumber: "00123A",
+      oabState: "GO",
+    };
+    const { publications: _publications, ...report } = referenceReport();
+    void _publications;
+    const response = {
+      ...report,
+      items: [],
+      total: { value: report.population, relation: "eq" },
+    };
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...response,
+          criteria: { ...report.criteria, ...fields },
+        }),
+        { status: 200 },
+      ),
+    );
+    const gateway = new HttpSearchGateway("/api/v1", transport);
+    const query: ReferenceQuery = {
+      criteria: { ...initialCriteria, ...fields },
+      references: "any",
+      includeProposals: false,
+      page: 1,
+      pageSize: 10,
+    };
+    const result = await gateway.queryReferences(
+      query,
+      new AbortController().signal,
+    );
+    expect(
+      JSON.parse(String(transport.mock.calls[0][1]?.body)).criteria,
+    ).toMatchObject(fields);
+    expect(result.criteria).toMatchObject(fields);
+  });
   it("recusa uma publicidade inválida antes de consultar a API", async () => {
     const transport = vi.fn<typeof fetch>();
     const gateway = new HttpSearchGateway("/api/v1", transport);
