@@ -79,3 +79,7 @@ npm run test:e2e
 A unidade das distribuições é **publicação**, não processo ou julgamento. Resultados são revalidados na projeção e as contagens da busca se referem ao retrato PIT; distribuições consultam a projeção atual em operação separada. Não certificam completude judicial ou atualização imediata do ledger. O backend sinaliza truncamento, aproximação, ausentes e limitações. Datas civis são exibidas sem conversão de timezone; a data da fonte é um eixo de aquisição separado.
 
 Métricas decisórias, contagem exata de processos e corpus congelado dependem de capacidades comprovadas. Recursos indisponíveis exibem o motivo retornado pela API. Citações e referências não provam existência, força vinculante, aplicabilidade ou vigência. Veja [arquitetura](docs/architecture.md).
+
+## Deploy
+
+O deploy em `gabriel@192.168.100.27` publica o front-end na porta 4200 e a API na porta 3000, usando Docker Compose e o acervo real. Consulte [operação da implantação](docs/deployment.md).
