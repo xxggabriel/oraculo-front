@@ -1,0 +1,299 @@
+<section class="min-w-0 border-t border-line py-6" [attr.aria-label]="title()">
+  <h3 class="text-base font-semibold text-ink">{{ title() }}</h3>
+  @if (description()) {
+    <p class="mt-1 text-sm leading-6 text-muted">{{ description() }}</p>
+  }
+  <p class="mt-2 text-xs text-muted">
+    Unidade: publicação · Percentuais sobre
+    {{ number(population()) }} publicações do recorte
+  </p>
+
+  @if (orderedBuckets().length) {
+    @if (kind() === "timeline") {
+      <svg
+        class="mt-5 block w-full"
+        viewBox="0 0 640 220"
+        role="img"
+        [attr.aria-label]="
+          title() +
+          '. Distribuição de publicações por período; valores disponíveis na lista e na tabela.'
+        "
+      >
+        <text x="60" y="14" class="fill-muted text-[11px]">Publicações</text>
+        @for (tick of ticks(); track $index) {
+          <line
+            x1="60"
+            x2="620"
+            [attr.y1]="28 + $index * 72"
+            [attr.y2]="28 + $index * 72"
+            stroke="#dce4df"
+            stroke-width="1"
+          ></line>
+          <text
+            x="51"
+            [attr.y]="32 + $index * 72"
+            text-anchor="end"
+            class="fill-muted text-[11px]"
+          >
+            {{ tickLabel(tick) }}
+          </text>
+        }
+        @for (bucket of visibleBuckets(); track $index) {
+          <rect
+            [attr.x]="columnX($index) - columnWidth() / 2"
+            [attr.y]="172 - columnHeight(bucket.count)"
+            [attr.width]="columnWidth()"
+            [attr.height]="columnHeight(bucket.count)"
+            rx="2"
+            fill="#16805b"
+          >
+            <title>
+              {{ label(bucket.label) }}:
+              {{ number(validCount(bucket.count)) }} publicações ({{
+                share(bucket.count)
+              }})
+            </title>
+          </rect>
+          @if (validCount(bucket.count) === 0) {
+            <circle
+              [attr.cx]="columnX($index)"
+              cy="172"
+              r="2"
+              fill="#16805b"
+            ></circle>
+          }
+        }
+        @for (period of periodLabels(); track period.index) {
+          <text
+            [attr.x]="columnX(period.index)"
+            y="193"
+            [attr.text-anchor]="
+              visibleBuckets().length === 1
+                ? 'middle'
+                : period.index === 0
+                  ? 'start'
+                  : period.index === visibleBuckets().length - 1
+                    ? 'end'
+                    : 'middle'
+            "
+            class="fill-muted text-[11px]"
+          >
+            {{ period.label }}
+          </text>
+        }
+        <text
+          x="340"
+          y="215"
+          text-anchor="middle"
+          class="fill-muted text-[11px]"
+        >
+          Períodos informados
+        </text>
+      </svg>
+      <p class="text-xs leading-5 text-muted">
+        Cada coluna representa um período informado. Intervalos sem dados não
+        são preenchidos.
+      </p>
+    }
+
+    <ul
+      class="mt-4"
+      [class.grid]="kind() === 'timeline'"
+      [class.sm:grid-cols-2]="kind() === 'timeline'"
+      [class.gap-x-5]="kind() === 'timeline'"
+    >
+      @for (bucket of visibleBuckets(); track $index) {
+        <li class="min-w-0">
+          <button
+            type="button"
+            class="group relative flex min-h-11 w-full items-start justify-between gap-3 border-b border-line px-2 py-3 text-left text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-default"
+            [disabled]="!selectable()"
+            [class.hover:bg-brand-50]="selectable()"
+            [attr.aria-label]="
+              selectable()
+                ? 'Filtrar por ' +
+                  label(bucket.label) +
+                  ': ' +
+                  number(validCount(bucket.count)) +
+                  ' publicações'
+                : null
+            "
+            (click)="select(bucket.label)"
+          >
+            @if (kind() === "bars") {
+              <span
+                class="absolute inset-y-2 left-0 rounded-sm bg-brand-50"
+                [style.width.%]="width(bucket.count)"
+                aria-hidden="true"
+              ></span>
+            }
+            <span
+              class="relative min-w-0 break-words"
+              [class.group-hover:underline]="selectable()"
+              >{{ label(bucket.label) }}</span
+            >
+            <span class="relative shrink-0 text-right tabular-nums"
+              ><span class="font-semibold">{{
+                number(validCount(bucket.count))
+              }}</span
+              ><span class="ml-2 text-xs text-muted">{{
+                share(bucket.count)
+              }}</span></span
+            >
+          </button>
+        </li>
+      }
+    </ul>
+
+    @if (orderedBuckets().length > limit()) {
+      <button
+        type="button"
+        class="mt-3 min-h-11 text-sm font-semibold text-brand underline decoration-brand/30 underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+        [attr.aria-expanded]="expanded()"
+        (click)="expanded.set(!expanded())"
+      >
+        {{
+          expanded()
+            ? "Mostrar " + limit() + " valores"
+            : "Mostrar todos os " +
+              orderedBuckets().length +
+              " valores recebidos"
+        }}
+      </button>
+      <p class="text-xs text-muted">
+        {{ visibleBuckets().length }} de {{ orderedBuckets().length }} valores
+        recebidos estão no gráfico.
+      </p>
+    }
+    @if (selectable()) {
+      <p class="mt-3 text-xs text-muted">
+        Selecione um valor para filtrar as publicações.
+      </p>
+    }
+  } @else {
+    <p class="mt-5 text-sm text-muted">Nenhum valor informado neste recorte.</p>
+  }
+
+  @if (showCoverage()) {
+    <p class="mt-4 text-xs leading-5 text-muted">
+      Não informado:
+      <span class="tabular-nums"
+        >{{ number(validCount(missing())) }} ({{ share(missing()) }})</span
+      >
+      · Outros valores:
+      <span class="tabular-nums"
+        >{{ number(validCount(other())) }} ({{ share(other()) }})</span
+      >
+    </p>
+  }
+  @if (truncated()) {
+    <p class="mt-1 text-xs leading-5 text-muted">
+      A distribuição retornada está truncada. Expandir mostra todos os valores
+      recebidos, sem recuperar os valores omitidos pela consulta.
+    </p>
+  }
+  @if (approximate()) {
+    <p class="mt-1 text-xs leading-5 text-muted">
+      Contagens aproximadas.
+      {{
+        countError() < 0
+          ? "Limite superior do erro não estimado."
+          : "Limite superior do erro de contagem: " + number(countError()) + "."
+      }}
+    </p>
+  }
+  @if (!approximate() && !truncated()) {
+    <p class="mt-1 text-xs leading-5 text-muted">
+      Contagens exatas na distribuição recebida.
+    </p>
+  }
+
+  <details class="mt-4 text-sm">
+    <summary
+      class="min-h-11 cursor-pointer py-3 text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+    >
+      Ver tabela com {{ orderedBuckets().length }} valores
+    </summary>
+    <table class="w-full table-fixed border-collapse text-xs">
+      <caption class="sr-only">
+        {{
+          title()
+        }}. Unidade publicação; percentual sobre
+        {{
+          number(population())
+        }}
+        publicações.
+      </caption>
+      <thead>
+        <tr class="text-muted">
+          <th
+            scope="col"
+            class="w-1/2 border-b border-line py-2 text-left font-normal"
+          >
+            Valor
+          </th>
+          <th
+            scope="col"
+            class="border-b border-line py-2 text-right font-normal"
+          >
+            Publicações
+          </th>
+          <th
+            scope="col"
+            class="border-b border-line py-2 text-right font-normal"
+          >
+            Percentual
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (bucket of orderedBuckets(); track $index) {
+          <tr>
+            <th
+              scope="row"
+              class="break-words border-b border-line py-2 pr-2 text-left font-normal"
+            >
+              {{ label(bucket.label) }}
+            </th>
+            <td class="border-b border-line py-2 text-right tabular-nums">
+              {{ number(validCount(bucket.count)) }}
+            </td>
+            <td class="border-b border-line py-2 text-right tabular-nums">
+              {{ share(bucket.count) }}
+            </td>
+          </tr>
+        }
+        @if (showCoverage()) {
+          <tr class="text-muted">
+            <th
+              scope="row"
+              class="border-b border-line py-2 pr-2 text-left font-normal"
+            >
+              Não informado
+            </th>
+            <td class="border-b border-line py-2 text-right tabular-nums">
+              {{ number(validCount(missing())) }}
+            </td>
+            <td class="border-b border-line py-2 text-right tabular-nums">
+              {{ share(missing()) }}
+            </td>
+          </tr>
+          <tr class="text-muted">
+            <th
+              scope="row"
+              class="border-b border-line py-2 pr-2 text-left font-normal"
+            >
+              Outros valores
+            </th>
+            <td class="border-b border-line py-2 text-right tabular-nums">
+              {{ number(validCount(other())) }}
+            </td>
+            <td class="border-b border-line py-2 text-right tabular-nums">
+              {{ share(other()) }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </details>
+</section>

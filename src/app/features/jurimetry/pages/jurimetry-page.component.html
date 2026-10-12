@@ -1,0 +1,362 @@
+<section class="mb-6 flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight sm:text-[28px]">
+      Jurimetria por referências
+    </h1>
+    <p class="mt-2 max-w-2xl text-sm leading-6 text-muted">
+      Compare publicações, explore as referências citadas e abra os documentos
+      que sustentam o recorte.
+    </p>
+  </div>
+  <app-search-capabilities
+    [capabilities]="vm.capabilities()"
+    [error]="vm.capabilityError()"
+  />
+</section>
+<app-search-query
+  [criteria]="vm.criteria()"
+  [loading]="vm.loading()"
+  (search)="search($event)"
+/>
+<section
+  class="mb-7 flex flex-wrap items-end gap-x-6 gap-y-4 border-b border-line pb-6"
+  aria-label="Condições das referências"
+>
+  <div class="min-w-0 basis-full flex-1 sm:min-w-64 sm:basis-0">
+    <label for="reference-mode" class="mb-2 block text-sm font-semibold"
+      >Referências nos documentos</label
+    >
+    <select
+      id="reference-mode"
+      class="h-11 w-full rounded-lg border border-line bg-white px-3 text-sm"
+      [value]="draftReferences()"
+      (change)="selectReferences($event)"
+      [disabled]="vm.loading()"
+    >
+      @for (mode of modes; track mode.value) {
+        <option
+          [value]="mode.value"
+          [selected]="draftReferences() === mode.value"
+          [disabled]="!available()"
+        >
+          {{ mode.label }}
+        </option>
+      }
+    </select>
+  </div>
+  <label
+    class="flex min-h-11 max-w-sm cursor-pointer items-start gap-2 text-sm leading-6"
+  >
+    <input
+      class="mt-1 size-4 shrink-0 accent-brand-600"
+      type="checkbox"
+      [checked]="draftIncludeProposals()"
+      (change)="toggleUnvalidated($event)"
+      [disabled]="vm.loading()"
+    />
+    <span
+      >Incluir menções não validadas<span class="block text-xs text-muted"
+        >Desmarque para usar somente referências validadas.</span
+      ></span
+    >
+  </label>
+  <button
+    class="min-h-11 rounded-lg bg-brand-600 px-5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-50"
+    type="button"
+    (click)="consult()"
+    [disabled]="vm.loading() || !available()"
+  >
+    Consultar recorte
+  </button>
+  @if (vm.capabilities() && !available()) {
+    <p class="w-full text-sm text-muted" role="status">
+      A análise de referências exige as famílias jurisprudenciais e normativas
+      disponíveis. Consulte “Sobre o acervo” para verificar as capacidades
+      atuais.
+    </p>
+  }
+  @if (pendingReferences()) {
+    <p class="w-full text-xs text-muted" role="status">
+      Condições alteradas. Consulte o recorte para atualizar os gráficos e a
+      lista.
+    </p>
+  }
+</section>
+<div class="grid gap-6 lg:grid-cols-[268px_minmax(0,1fr)] lg:gap-9">
+  <aside
+    class="min-w-0 lg:border-r lg:border-line lg:pr-6"
+    aria-label="Filtros de jurimetria"
+  >
+    <app-filter-panel
+      idPrefix="jurimetry-filter"
+      [criteria]="vm.criteria()"
+      [facets]="vm.facets()"
+      [capabilities]="vm.capabilities()"
+      [loading]="vm.loading()"
+      (apply)="applyFilters($event)"
+      (clear)="clearFilters()"
+    />
+    <p class="mt-4 text-xs leading-6 text-muted">
+      Consulte também recortes com mais de 1.000 publicações. Tema, tribunal,
+      processo e período ajudam a selecionar documentos relevantes.
+    </p>
+    @if (vm.facetError(); as error) {
+      <p class="mt-3 text-xs text-muted" role="status">
+        Opções de filtros indisponíveis: {{ error.message }}
+      </p>
+    }
+  </aside>
+  <section
+    id="jurimetry-results"
+    tabindex="-1"
+    class="min-w-0 outline-none"
+    aria-label="Resultados de jurimetria"
+    [attr.aria-busy]="vm.loading()"
+  >
+    <app-filter-chips
+      class="mb-4"
+      [chips]="appliedFilters()"
+      (remove)="removeFilter($event)"
+    />
+    <app-search-error [error]="vm.error()" (retry)="retry()" />
+    @if (vm.criteria().visibility === "restricted") {
+      <p
+        class="mb-4 rounded-lg bg-surface px-4 py-3 text-sm leading-6 text-muted"
+        role="status"
+      >
+        Publicações privadas ou em segredo de justiça não estão disponíveis
+        neste acesso. Selecione “Somente públicos” ou “Públicos e privados” para
+        consultar as publicações disponíveis.
+      </p>
+    }
+    @if (
+      vm.error()?.code === "QUERY_TIMEOUT" ||
+      vm.error()?.code === "RESPONSE_BUDGET_EXCEEDED"
+    ) {
+      <p class="mb-5 text-sm leading-6 text-muted">
+        Refine o tema, o processo ou o período para reduzir o recorte e
+        respeitar os limites de volume e tempo. Nenhuma amostra foi usada para
+        calcular indicadores deste recorte.
+      </p>
+    }
+    @if (!vm.enabled()) {
+      <div class="border-b border-line py-8">
+        <h2 class="text-xl font-semibold">Prepare um recorte</h2>
+        <p class="mt-3 max-w-xl text-sm leading-7 text-muted">
+          Informe um tema específico ou escolha filtros e consulte. A análise
+          exibirá a população completa admitida, as referências presentes e as
+          publicações para leitura.
+        </p>
+        <ul class="mt-5 space-y-2 text-sm leading-6 text-muted">
+          <li>
+            Tribunais e tipos ajudam a comparar a composição das publicações.
+          </li>
+          <li>O período mostra onde se concentra o volume publicado.</li>
+          <li>As referências mais frequentes ajudam a direcionar a leitura.</li>
+        </ul>
+      </div>
+    }
+    @if (vm.loading()) {
+      <p class="py-10 text-sm text-muted" role="status">
+        Validando referências e calculando o recorte completo. Consultas amplas
+        podem levar alguns segundos…
+      </p>
+    }
+    @if (vm.report(); as report) {
+      <section aria-label="Resumo do recorte" class="border-b border-line pb-6">
+        <div class="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 class="text-xl font-semibold">Visão do recorte</h2>
+          <p class="text-xs text-muted">{{ modeLabel(report.references) }}</p>
+          <button
+            type="button"
+            class="text-sm font-medium text-brand-700 hover:underline"
+            (click)="showPublications()"
+          >
+            Ver publicações →
+          </button>
+        </div>
+        <dl class="mt-6 grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
+          <div>
+            <dt class="text-xs text-muted">Publicações no resultado</dt>
+            <dd
+              class="jurimetry-population mt-2 text-3xl font-semibold tracking-tight"
+            >
+              {{ number(report.population) }}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-xs text-muted">Antes da condição de referências</dt>
+            <dd class="mt-2 text-3xl font-semibold tracking-tight">
+              {{ number(report.totalCandidates) }}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-xs text-muted">Parcela do recorte original</dt>
+            <dd class="mt-2 text-3xl font-semibold tracking-tight">
+              {{ coverage() }}
+            </dd>
+          </div>
+        </dl>
+        <p class="mt-5 text-xs leading-6 text-muted">
+          Unidade: publicação, não processo ou julgamento. Lista e gráficos usam
+          as mesmas condições e a mesma política de referências.
+        </p>
+        <p class="mt-2 text-xs leading-6 text-muted">
+          {{
+            report.includeProposals
+              ? "Inclui menções extraídas ainda não validadas; referências rejeitadas são excluídas."
+              : "Considera somente referências validadas."
+          }}
+          Presença de citação não comprova aplicabilidade, vigência ou resultado
+          do processo.
+        </p>
+        @if (!report.population) {
+          <p class="mt-4 text-sm font-medium">
+            Sem publicações admissíveis para estas condições. Amplie o recorte
+            ou revise a política de validação.
+          </p>
+        }
+      </section>
+      <div class="mt-7 grid gap-x-8 gap-y-7 sm:grid-cols-2">
+        @for (distribution of plotDistributions(); track distribution.field) {
+          <app-distribution-plot
+            [class.sm:col-span-2]="distribution.field === 'period'"
+            [title]="
+              distribution.field === 'court'
+                ? 'Publicações por tribunal'
+                : distribution.field === 'documentType'
+                  ? 'Tipos de publicação'
+                  : 'Volume por mês'
+            "
+            [description]="
+              distribution.field === 'period'
+                ? 'Eixo: ' +
+                  axisLabels[report.dateAxis] +
+                  '. Ausências de data são mostradas separadamente.'
+                : 'Selecione uma barra para refinar a lista e os demais gráficos.'
+            "
+            [buckets]="distribution.buckets"
+            [population]="report.population"
+            [missing]="distribution.missing"
+            [other]="distribution.other"
+            [countError]="distribution.countError"
+            [truncated]="distribution.truncated"
+            [approximate]="distribution.approximate"
+            [kind]="distribution.field === 'period' ? 'timeline' : 'bars'"
+            [selectable]="distribution.field !== 'period'"
+            (bucketSelected)="
+              distribution.field !== 'period' &&
+                selectBucket(distribution.field, $event)
+            "
+          />
+        }
+        <app-distribution-plot
+          title="Presença de referências"
+          description="Grupos exclusivos: cada publicação aparece em uma única barra. A política de validação escolhida se aplica a todas as famílias."
+          [buckets]="presenceBuckets()"
+          [population]="report.population"
+        />
+        <app-distribution-plot
+          title="Referências mais frequentes"
+          [showCoverage]="false"
+          description="Até 20 referências, por publicações que as mencionam. Uma publicação pode citar várias referências; estas barras não são exclusivas."
+          [buckets]="frequentBuckets()"
+          [population]="report.population"
+        />
+      </div>
+      <app-judicial-distributions
+        [distribution]="report.judicialDistribution ?? null"
+        [population]="report.population"
+      />
+      @if (report.topReferences.length) {
+        <details class="mt-6 border-t border-line py-4 text-xs">
+          <summary class="font-medium text-brand-700">
+            Publicações e menções por referência
+          </summary>
+          <div class="mt-4 overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <caption class="sr-only">
+                Frequência das referências: publicações únicas e ocorrências
+                admitidas
+              </caption>
+              <thead>
+                <tr class="border-b border-line">
+                  <th class="py-2 pr-3">Referência</th>
+                  <th class="px-2 py-2 text-right">Publicações</th>
+                  <th class="py-2 pl-2 text-right">Menções</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (
+                  reference of report.topReferences;
+                  track reference.family + ":" + reference.key
+                ) {
+                  <tr class="border-b border-line">
+                    <td class="min-w-0 py-3 pr-3">
+                      <span class="block break-words">{{
+                        referenceLabel(reference)
+                      }}</span>
+                    </td>
+                    <td class="px-2 py-3 text-right tabular-nums">
+                      {{ number(reference.publications) }}
+                    </td>
+                    <td class="py-3 pl-2 text-right tabular-nums">
+                      {{ number(reference.mentions) }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </details>
+      }
+      <details
+        class="mt-3 border-y border-line py-4 text-xs leading-6 text-muted"
+      >
+        <summary class="font-medium text-brand-700">
+          Fonte, seleção e interpretação
+        </summary>
+        <div class="mt-3 space-y-2">
+          <p>
+            Elasticsearch · projeção consultável. Observado em
+            {{ report.observedAt }}. A análise usa o recorte completo, com
+            paginação de publicações e contagens exatas.
+          </p>
+          <p>
+            Revisão: {{ report.reviewPolicy }}. Seleção:
+            {{ report.selectionPolicy }}.
+          </p>
+          <p>
+            Referências precisam corresponder ao enriquecimento selecionado, à
+            revisão e ao texto da publicação. Campos ausentes são mantidos como
+            ausentes. Frequência de menção não estima chance de êxito.
+          </p>
+          @for (warning of report.warnings; track $index) {
+            <p>{{ warning }}</p>
+          }
+        </div>
+      </details>
+      <section
+        id="jurimetry-publications"
+        tabindex="-1"
+        class="mt-9 scroll-mt-6 outline-none"
+        aria-label="Publicações do recorte"
+      >
+        <h2 class="mb-5 text-xl font-semibold">Publicações do recorte</h2>
+        <app-publication-results
+          snapshotKind="report"
+          [page]="listPage()"
+          [pageNumber]="vm.page() + 1"
+          [pageSize]="vm.pageSize()"
+          [hasPrevious]="vm.page() > 0"
+          [sort]="vm.criteria().sort"
+          [queryParams]="queryParams()"
+          (next)="next()"
+          (previous)="previous()"
+          (pageSizeChange)="changeSize($event)"
+          (sortChange)="changeSort($event)"
+        />
+      </section>
+    }
+  </section>
+</div>

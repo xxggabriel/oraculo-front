@@ -1,0 +1,13 @@
+# Publicações relacionadas
+
+A interna da publicação apresenta até quatro sugestões pelo endpoint `GET /api/v1/publications/{id}/related`. A origem e duplicatas são excluídas. A API aplica acesso e revalida publicação, revisão e versão de texto antes da entrega.
+
+A estratégia atual, `process_text_metadata` versão `1`, prioriza o mesmo processo com relação `publication_process` válida. Em seguida procura proximidade lexical do texto com More Like This do Elasticsearch; tribunal e tipo reforçam essa ordenação. O complemento exige tribunal e tipo iguais, ambos informados. Cada sugestão informa o motivo: **Mesmo processo**, **Texto semelhante** ou **Mesmo tribunal e tipo**. Quando faltam candidatos elegíveis, a seção mostra menos de quatro; não completa com documentos arbitrários. Proximidade textual não prova equivalência ou aplicabilidade jurídica.
+
+`application/recommend-related-publications.ts` contém o caso de uso próprio `RecommendRelatedPublications`. Ele depende de `RelatedPublicationsGateway`, definido no núcleo e resolvido em `composition/search.providers.ts`. O adapter HTTP valida o contrato, a identidade da origem, a exclusão da origem e a unicidade dos candidatos. Estratégias futuras podem evoluir no backend sem acoplar a página ao Elasticsearch. O backend possui seu próprio caso de uso, porta e estratégia versionada; consulte `oraculo-back/docs/related-publications.md`.
+
+`RelatedPublicationsComponent` é reutilizável e recebe itens, estado de carga, erro e query params. Emite `retry`, sem fazer chamadas HTTP. Um `idPrefix` distinto permite várias instâncias. Snippets passam pelo parser compartilhado para extrair o texto visível antes do limite de 240 pontos de código Unicode; tags não aparecem no resumo. Veja [renderização de publicações](publication-content.md). Datas ausentes permanecem explícitas.
+
+A página carrega recomendações depois do detalhe, em uma requisição independente: falhas nas sugestões preservam o texto principal e permitem tentar novamente somente a recomendação. Mudança de publicação e destruição abortam requisições; geração e identidade do controller impedem respostas antigas de substituir os dados atuais. Navegar por uma sugestão preserva os filtros e o destino de retorno (pesquisa ou jurimetria), cancela a recomendação anterior e direciona o foco ao título da nova publicação.
+
+As recomendações consultam a projeção atual e não usam o PIT da pesquisa. Os filtros conservados na URL servem para retornar ao recorte; **não restringem as recomendações**, que consideram a publicação aberta. A API informa `projection_snapshot`, estratégia, versão e ressalvas. Não há escrita no acervo, novo índice ou chamada de IA.

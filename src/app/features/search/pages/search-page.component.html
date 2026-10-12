@@ -1,0 +1,114 @@
+<section class="mb-6 flex flex-wrap items-start justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight text-ink sm:text-[28px]">
+      Pesquisa de publicações
+    </h1>
+    <p class="mt-2 text-sm text-muted">
+      Encontre publicações e explore os dados do seu recorte.
+    </p>
+  </div>
+  <app-search-capabilities
+    class="max-w-full"
+    [capabilities]="vm.capabilities()"
+    [error]="vm.capabilityError()"
+  />
+</section>
+<app-search-query
+  [criteria]="vm.criteria()"
+  [loading]="vm.loading()"
+  (search)="search($event)"
+/>
+<nav
+  class="mb-6 flex flex-wrap items-center gap-6 border-b border-line text-sm"
+  aria-label="Visão do recorte"
+>
+  <button
+    class="-mb-px min-h-12 border-b-2 px-1 font-medium"
+    [class]="
+      activeTab() === 'publications'
+        ? 'border-brand-600 text-brand-700'
+        : 'border-transparent text-muted'
+    "
+    type="button"
+    (click)="activeTab.set('publications')"
+    [attr.aria-pressed]="activeTab() === 'publications'"
+  >
+    Publicações
+  </button>
+  <button
+    class="-mb-px min-h-12 border-b-2 px-1 font-medium"
+    [class]="
+      activeTab() === 'analysis'
+        ? 'border-brand-600 text-brand-700'
+        : 'border-transparent text-muted'
+    "
+    type="button"
+    (click)="activeTab.set('analysis')"
+    [attr.aria-pressed]="activeTab() === 'analysis'"
+  >
+    Jurimetria do recorte
+  </button>
+</nav>
+<div class="grid gap-6 lg:grid-cols-[268px_minmax(0,1fr)] lg:gap-9">
+  <aside
+    class="min-w-0 lg:border-r lg:border-line lg:pr-6"
+    aria-label="Filtros de pesquisa"
+  >
+    <app-filter-panel
+      [criteria]="vm.criteria()"
+      [facets]="vm.facets()"
+      [capabilities]="vm.capabilities()"
+      [loading]="vm.loading()"
+      (apply)="applyFilters($event)"
+      (clear)="clearFilters()"
+    />
+  </aside>
+  <section
+    id="results-plane"
+    tabindex="-1"
+    class="min-w-0 outline-none"
+    aria-label="Resultados da pesquisa"
+    [attr.aria-busy]="vm.loading()"
+  >
+    <app-filter-chips
+      class="mb-4"
+      [chips]="appliedFilters()"
+      (remove)="removeFilter($event)"
+    />
+    <app-search-error [error]="vm.error()" (retry)="retry()" />
+    @if (vm.criteria().visibility === "restricted") {
+      <p
+        class="mb-4 rounded-lg bg-surface px-4 py-3 text-sm leading-6 text-muted"
+        role="status"
+      >
+        Publicações privadas ou em segredo de justiça não estão disponíveis
+        neste acesso. Selecione “Somente públicos” ou “Públicos e privados” para
+        consultar as publicações disponíveis.
+      </p>
+    }
+    @if (activeTab() === "publications") {
+      <app-publication-results
+        [page]="vm.page()"
+        [loading]="vm.loading()"
+        [pageNumber]="vm.pageNumber()"
+        [pageSize]="vm.pageSize()"
+        [hasPrevious]="vm.hasPrevious()"
+        [sort]="vm.criteria().sort"
+        [queryParams]="route.snapshot.queryParams"
+        [facets]="vm.facets()"
+        [facetError]="vm.facetError()"
+        (next)="vm.next()"
+        (previous)="vm.previous()"
+        (pageSizeChange)="changeSize($event)"
+        (sortChange)="changeSort($event)"
+      />
+    } @else {
+      <app-search-analysis
+        [analysis]="vm.analysis()"
+        [loading]="vm.analysisLoading()"
+        [error]="vm.analysisError()"
+        [capabilities]="vm.capabilities()"
+      />
+    }
+  </section>
+</div>

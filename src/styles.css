@@ -1,0 +1,43 @@
+@import "tailwindcss" source("./");
+
+@theme {
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --color-brand-50: #edf8f5;
+  --color-brand-100: #d5f0e7;
+  --color-brand-500: #00856f;
+  --color-brand-600: #00745f;
+  --color-brand-700: #00604f;
+  --color-ink: #172237;
+  --color-muted: #637083;
+  --color-line: #e4e8ed;
+  --color-surface: #f5f7f9;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    scroll-padding-top: 6rem;
+  }
+  body {
+    background: white;
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+  button,
+  summary,
+  select {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  :where(a, button, input, select, summary):focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 3px;
+  }
+  main:focus {
+    outline: none;
+  }
+}

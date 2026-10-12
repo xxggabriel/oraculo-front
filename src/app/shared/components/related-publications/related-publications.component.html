@@ -1,0 +1,90 @@
+<section
+  [id]="sectionId()"
+  tabindex="-1"
+  [attr.aria-labelledby]="headingId()"
+  [attr.aria-busy]="loading()"
+  class="mt-12 min-w-0 scroll-mt-6 border-t border-line pt-8 outline-none"
+>
+  <h2 [id]="headingId()" class="text-xl font-semibold tracking-tight">
+    Publicações relacionadas
+  </h2>
+  <p class="mt-2 text-sm leading-6 text-muted">
+    Sugestões por processo em comum, proximidade textual ou mesmo tribunal e
+    tipo de documento.
+  </p>
+  @if (loading()) {
+    <p class="py-6 text-sm text-muted" role="status">
+      Buscando publicações relacionadas…
+    </p>
+  } @else if (error(); as error) {
+    <div class="py-5 text-sm" role="status">
+      <p class="text-muted">
+        Não foi possível carregar as publicações relacionadas.
+      </p>
+      <button
+        class="mt-3 min-h-10 font-medium text-brand-700 hover:underline"
+        type="button"
+        (click)="retry.emit()"
+      >
+        Tentar novamente
+      </button>
+    </div>
+  } @else if (!items().length) {
+    <p class="py-6 text-sm text-muted">
+      Nenhuma publicação relacionada disponível neste momento.
+    </p>
+  } @else {
+    <div class="mt-5 grid gap-x-8 sm:grid-cols-2">
+      @for (item of items(); track item.publication.id) {
+        <article
+          class="related-publication flex min-w-0 flex-col border-b border-line py-5"
+        >
+          <p class="text-xs font-medium text-brand-700">
+            {{ reasons[item.reason] }}
+          </p>
+          <div
+            class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted"
+          >
+            <span class="font-semibold">{{
+              item.publication.court ?? "Tribunal não informado"
+            }}</span>
+            @if (item.publication.type) {
+              <span class="capitalize">{{ item.publication.type }}</span>
+            }
+            <span>{{
+              item.publication.publicationDate
+                ? "Publicado em " + civilDate(item.publication.publicationDate)
+                : "Data de publicação não informada"
+            }}</span>
+          </div>
+          <h3
+            class="mt-2 text-base font-semibold leading-7 text-brand-700 [overflow-wrap:anywhere]"
+          >
+            <a
+              [routerLink]="['/publicacoes', item.publication.id]"
+              [queryParams]="queryParams()"
+              class="hover:underline"
+              >{{ title(item.publication) }}</a
+            >
+          </h3>
+          @if (excerpt(item.publication); as snippet) {
+            <p
+              class="mt-2 line-clamp-3 text-sm leading-6 text-ink [overflow-wrap:anywhere]"
+            >
+              {{ snippet }}
+            </p>
+          }
+          <a
+            class="mt-3 inline-flex min-h-9 items-center gap-2 self-start text-xs font-medium text-brand-700 hover:underline"
+            [routerLink]="['/publicacoes', item.publication.id]"
+            [queryParams]="queryParams()"
+            [attr.aria-label]="
+              'Abrir publicação relacionada: ' + title(item.publication)
+            "
+            >Abrir publicação <span aria-hidden="true">→</span></a
+          >
+        </article>
+      }
+    </div>
+  }
+</section>

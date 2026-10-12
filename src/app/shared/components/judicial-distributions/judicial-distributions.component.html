@@ -1,0 +1,171 @@
+<section
+  class="mt-9 border-t border-line pt-7"
+  aria-label="Órgãos judiciais e relatores"
+>
+  <h2 class="text-xl font-semibold">Órgãos judiciais e relatores</h2>
+  <p class="mt-2 text-sm leading-6 text-muted">
+    Escolha um tribunal e um órgão para explorar os dados deste recorte.
+    Relatores são agrupados pelo nome informado na fonte, dentro de cada órgão.
+    Grafias diferentes aparecem separadamente.
+  </p>
+  @if (distribution(); as distribution) {
+    @if (court(); as court) {
+      <div class="mt-5 grid min-w-0 gap-x-8 gap-y-6 sm:grid-cols-2">
+        <div class="min-w-0">
+          <label [for]="id('court')" class="mb-2 block text-sm font-semibold"
+            >Tribunal dos órgãos judiciais</label
+          >
+          <select
+            [id]="id('court')"
+            class="h-11 w-full min-w-0 rounded-lg border border-line bg-white px-3 text-sm"
+            [value]="key(court.name)"
+            (change)="chooseCourt($event)"
+          >
+            @for (item of distribution.courts; track key(item.name)) {
+              <option
+                [value]="key(item.name)"
+                [selected]="item.name === court.name"
+              >
+                {{ label(item.name, "Tribunal não informado") }} ·
+                {{ number(item.publications) }} publicações
+              </option>
+            }
+          </select>
+          <app-distribution-plot
+            class="mt-5"
+            [title]="'Órgãos · ' + label(court.name, 'Tribunal não informado')"
+            description="Publicações por órgão judicial. Percentuais sobre as publicações do tribunal selecionado."
+            [buckets]="organBuckets()"
+            [population]="court.publications"
+            [missing]="missingOrgan()"
+          />
+        </div>
+        @if (organ(); as organ) {
+          <div class="min-w-0">
+            <label [for]="id('organ')" class="mb-2 block text-sm font-semibold"
+              >Órgão dos relatores</label
+            >
+            <select
+              [id]="id('organ')"
+              class="h-11 w-full min-w-0 rounded-lg border border-line bg-white px-3 text-sm"
+              [value]="key(organ.name)"
+              (change)="chooseOrgan($event)"
+            >
+              @for (item of court.organs; track key(item.name)) {
+                <option
+                  [value]="key(item.name)"
+                  [selected]="item.name === organ.name"
+                >
+                  {{ label(item.name, "Órgão não informado") }} ·
+                  {{ number(item.publications) }} publicações
+                </option>
+              }
+            </select>
+            <app-distribution-plot
+              class="mt-5"
+              [title]="
+                'Relatores · ' + label(organ.name, 'Órgão não informado')
+              "
+              description="Percentuais sobre as publicações do órgão selecionado, dentro deste tribunal."
+              [buckets]="rapporteurBuckets()"
+              [population]="organ.publications"
+              [showCoverage]="false"
+            />
+            <p class="mt-3 text-xs leading-6 text-muted">
+              Publicações sem relator informado:
+              {{ number(organ.missingRapporteur) }}. Publicações com informação
+              ambígua: {{ number(organ.ambiguousRapporteur) }}. Esses casos não
+              são atribuídos a um relator.
+            </p>
+          </div>
+        }
+      </div>
+    } @else {
+      <p class="mt-5 text-sm text-muted">
+        Sem publicações para distribuir entre tribunais e órgãos neste recorte.
+      </p>
+    }
+    <section
+      class="mt-8 border-t border-line pt-6"
+      aria-label="Classes processuais por código"
+    >
+      <app-distribution-plot
+        title="Classes processuais por código"
+        description="Cada código identifica um grupo. O nome mais frequente nesse grupo é exibido junto ao código. Percentuais sobre todas as publicações do recorte."
+        [buckets]="classBuckets()"
+        [population]="population()"
+        [missing]="distribution.missingClassCode"
+      />
+      <p class="mt-3 text-xs leading-6 text-muted">
+        Publicações sem nome de classe:
+        {{ number(distribution.missingClassName) }}. Publicações sem código não
+        são agrupadas apenas pelo nome da classe.
+      </p>
+      @if (distribution.classes.length) {
+        <button
+          type="button"
+          class="mt-3 min-h-11 text-sm font-medium text-brand-700 hover:underline"
+          [attr.aria-expanded]="showNames()"
+          [attr.aria-controls]="id('class-names')"
+          (click)="showNames.set(!showNames())"
+        >
+          {{
+            showNames() ? "Ocultar nomes por código" : "Ver nomes por código"
+          }}
+        </button>
+        @if (showNames()) {
+          <div [id]="id('class-names')" class="mt-3">
+            <p class="mb-3 text-xs leading-6 text-muted">
+              Nomes diferentes associados ao mesmo código permanecem no mesmo
+              grupo. A tabela conserva os nomes observados na fonte.
+            </p>
+            <table class="w-full table-fixed text-left text-xs">
+              <caption class="sr-only">
+                Nomes das classes processuais agrupados pelo código da classe
+              </caption>
+              <thead>
+                <tr class="border-b border-line">
+                  <th scope="col" class="w-1/5 py-2 pr-2">Código</th>
+                  <th scope="col" class="w-3/5 py-2 pr-2">Nome observado</th>
+                  <th scope="col" class="py-2 text-right">Publicações</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of distribution.classes; track item.code) {
+                  @for (name of item.names; track name.name) {
+                    <tr class="border-b border-line">
+                      <th scope="row" class="break-words py-3 pr-2 font-normal">
+                        {{ item.code }}
+                      </th>
+                      <td class="break-words py-3 pr-2">
+                        {{ label(name.name, "Não informado") }}
+                      </td>
+                      <td class="py-3 text-right tabular-nums">
+                        {{ number(name.publications) }}
+                      </td>
+                    </tr>
+                  }
+                  @if (item.missingName) {
+                    <tr class="border-b border-line text-muted">
+                      <th scope="row" class="break-words py-3 pr-2 font-normal">
+                        {{ item.code }}
+                      </th>
+                      <td class="py-3 pr-2">Nome não informado</td>
+                      <td class="py-3 text-right tabular-nums">
+                        {{ number(item.missingName) }}
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      }
+    </section>
+  } @else {
+    <p class="mt-5 text-sm text-muted">
+      Distribuições de órgãos, relatores e classes indisponíveis nesta resposta.
+    </p>
+  }
+</section>

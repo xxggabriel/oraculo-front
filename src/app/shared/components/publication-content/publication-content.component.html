@@ -1,0 +1,367 @@
+<ng-container
+  [ngTemplateOutlet]="content"
+  [ngTemplateOutletContext]="{ $implicit: nodes() }"
+/>
+<ng-template #content let-nodes>
+  @for (node of nodes; track $index) {
+    @switch (node.kind) {
+      @case ("text") {
+        @for (part of node.parts; track $index) {
+          @if (part.references.length) {
+            <span
+              [id]="part.anchor"
+              tabindex="-1"
+              class="scroll-mt-24 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              [class.bg-amber-100]="part.highlighted"
+              ><app-reference-link
+                [reference]="part.references[0]"
+                [text]="part.text"
+                [href]="
+                  baseHref() +
+                  '#' +
+                  encodeFragment(referenceAnchor(part.references[0]))
+                "
+                [anchor]="referenceAnchor(part.references[0])"
+                [sourceAnchor]="part.anchor"
+                [context]="part.context"
+                [contextIsPlain]="true"
+                (anchorActivated)="anchorActivated.emit($event)"
+              />
+              @for (
+                reference of part.additionalLinks
+                  ? part.references.slice(1)
+                  : [];
+                track referenceAnchor(reference);
+                let index = $index
+              ) {
+                <app-reference-link
+                  [reference]="reference"
+                  [text]="'[' + (index + 2) + ']'"
+                  [href]="
+                    baseHref() +
+                    '#' +
+                    encodeFragment(referenceAnchor(reference))
+                  "
+                  [anchor]="referenceAnchor(reference)"
+                  [sourceAnchor]="part.anchor"
+                  [context]="part.context"
+                  [contextIsPlain]="true"
+                  [additional]="true"
+                  (anchorActivated)="anchorActivated.emit($event)"
+                />
+              }
+            </span>
+          } @else if (part.highlighted) {
+            <mark class="rounded-sm bg-amber-100 px-0.5 text-inherit">{{
+              part.text
+            }}</mark>
+          } @else {
+            <span>{{ part.text }}</span>
+          }
+        }
+      }
+      @case ("break") {
+        <br />
+      }
+      @case ("rule") {
+        <hr class="my-5 border-line" />
+      }
+      @case ("element") {
+        @switch (node.tag) {
+          @case ("center") {
+            <div
+              class="publication-html-center my-4 text-center whitespace-normal"
+            >
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </div>
+          }
+          @case ("p") {
+            <p class="my-3 whitespace-normal">
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </p>
+          }
+          @case ("div") {
+            <div class="whitespace-normal">
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </div>
+          }
+          @case ("section") {
+            <section class="my-4 whitespace-normal">
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </section>
+          }
+          @case ("article") {
+            <article class="my-4 whitespace-normal">
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </article>
+          }
+          @case ("h1") {
+            <h3 class="my-4 text-xl font-semibold whitespace-normal">
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </h3>
+          }
+          @case ("h2") {
+            <h3 class="my-4 text-lg font-semibold whitespace-normal">
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </h3>
+          }
+          @case ("h3") {
+            <h3 class="my-3 font-semibold whitespace-normal">
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </h3>
+          }
+          @case ("h4") {
+            <h4 class="my-3 font-semibold whitespace-normal">
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </h4>
+          }
+          @case ("h5") {
+            <h5 class="my-3 font-semibold whitespace-normal">
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </h5>
+          }
+          @case ("h6") {
+            <h6 class="my-3 font-semibold whitespace-normal">
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </h6>
+          }
+          @case ("strong") {
+            <strong
+              ><ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+            /></strong>
+          }
+          @case ("b") {
+            <b
+              ><ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+            /></b>
+          }
+          @case ("em") {
+            <em
+              ><ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+            /></em>
+          }
+          @case ("i") {
+            <i
+              ><ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+            /></i>
+          }
+          @case ("u") {
+            <u
+              ><ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+            /></u>
+          }
+          @case ("s") {
+            <s
+              ><ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+            /></s>
+          }
+          @case ("del") {
+            <del
+              ><ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+            /></del>
+          }
+          @case ("sup") {
+            <sup
+              ><ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+            /></sup>
+          }
+          @case ("sub") {
+            <sub
+              ><ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+            /></sub>
+          }
+          @case ("pre") {
+            <pre
+              class="my-3 max-w-full whitespace-pre-wrap font-sans"
+            ><ng-container [ngTemplateOutlet]="content" [ngTemplateOutletContext]="{ $implicit: node.children }" /></pre>
+          }
+          @case ("blockquote") {
+            <blockquote
+              class="my-4 border-l-2 border-line pl-4 whitespace-normal"
+            >
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </blockquote>
+          }
+          @case ("ul") {
+            <ul class="my-3 list-disc pl-6 whitespace-normal">
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </ul>
+          }
+          @case ("ol") {
+            <ol
+              class="my-3 pl-6 whitespace-normal"
+              [style.list-style-type]="listStyle(node.orderedType)"
+              [attr.start]="node.orderedStart ?? null"
+              [attr.type]="node.orderedType ?? null"
+              [attr.reversed]="node.orderedReversed ? '' : null"
+            >
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </ol>
+          }
+          @case ("li") {
+            <li class="my-1" [attr.value]="node.listValue ?? null">
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </li>
+          }
+          @case ("table") {
+            <div class="my-4 max-w-full overflow-x-auto">
+              <table
+                class="min-w-full border-collapse text-sm whitespace-normal"
+              >
+                <ng-container
+                  [ngTemplateOutlet]="content"
+                  [ngTemplateOutletContext]="{ $implicit: node.children }"
+                />
+              </table>
+            </div>
+          }
+          @case ("thead") {
+            <thead>
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </thead>
+          }
+          @case ("tbody") {
+            <tbody>
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </tbody>
+          }
+          @case ("tfoot") {
+            <tfoot>
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </tfoot>
+          }
+          @case ("tr") {
+            <tr>
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </tr>
+          }
+          @case ("td") {
+            <td
+              class="border border-line px-3 py-2 align-top"
+              [attr.colspan]="node.colSpan ?? null"
+              [attr.rowspan]="node.rowSpan ?? null"
+            >
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </td>
+          }
+          @case ("th") {
+            <th
+              class="border border-line px-3 py-2 text-left font-semibold align-top"
+              [attr.colspan]="node.colSpan ?? null"
+              [attr.rowspan]="node.rowSpan ?? null"
+            >
+              <ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+              />
+            </th>
+          }
+          @case ("a") {
+            @if (node.href && !node.containsReferences) {
+              <a
+                [href]="node.href"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-brand-700 underline underline-offset-4"
+                ><ng-container
+                  [ngTemplateOutlet]="content"
+                  [ngTemplateOutletContext]="{ $implicit: node.children }"
+              /></a>
+            } @else {
+              <span
+                ><ng-container
+                  [ngTemplateOutlet]="content"
+                  [ngTemplateOutletContext]="{ $implicit: node.children }"
+              /></span>
+            }
+          }
+          @default {
+            <span
+              ><ng-container
+                [ngTemplateOutlet]="content"
+                [ngTemplateOutletContext]="{ $implicit: node.children }"
+            /></span>
+          }
+        }
+      }
+    }
+  }
+</ng-template>

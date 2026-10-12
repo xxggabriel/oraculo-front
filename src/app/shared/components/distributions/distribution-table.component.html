@@ -1,0 +1,87 @@
+<section
+  class="distribution min-w-0 py-6"
+  [class.sm:col-span-2]="distribution().field === 'period'"
+>
+  <h3 class="mb-3 text-sm font-semibold">
+    {{ fieldLabels[distribution().field] }}
+  </h3>
+  <table class="w-full border-collapse text-sm">
+    <caption class="sr-only">
+      Distribuição por
+      {{
+        fieldLabels[distribution().field]
+      }}, unidade publicação
+    </caption>
+    <thead>
+      <tr class="text-xs text-muted">
+        <th
+          class="w-3/4 border-b border-line px-3 py-2 text-left font-normal"
+          scope="col"
+        >
+          {{ fieldLabels[distribution().field] }}
+        </th>
+        <th
+          class="border-b border-line px-3 py-2 text-right font-normal"
+          scope="col"
+        >
+          Publicações
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (bucket of distribution().buckets; track bucket.label) {
+        <tr>
+          <th
+            class="relative border-b border-line px-3 py-3 text-left font-normal"
+            scope="row"
+          >
+            <span
+              class="absolute inset-y-1.5 left-0 max-w-full rounded bg-brand-50"
+              [style.width]="width(bucket.count, distribution().buckets)"
+              aria-hidden="true"
+            ></span
+            ><span class="relative break-words">{{
+              distribution().field === "period"
+                ? civilDate(bucket.label)
+                : bucket.label
+            }}</span>
+          </th>
+          <td class="border-b border-line px-3 py-3 text-right tabular-nums">
+            {{ number(bucket.count) }}
+          </td>
+        </tr>
+      }
+      <tr class="text-muted">
+        <th
+          class="border-b border-line px-3 py-3 text-left font-normal"
+          scope="row"
+        >
+          Não informado
+        </th>
+        <td class="border-b border-line px-3 py-3 text-right tabular-nums">
+          {{ number(distribution().missing) }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="mt-3 text-[11px] leading-5 text-muted">
+    {{
+      distribution().truncated
+        ? "Lista de valores truncada"
+        : "Sem truncamento informado"
+    }}
+    ·
+    {{
+      distribution().approximate
+        ? "Contagens aproximadas"
+        : "Contagens exatas no recorte consultado"
+    }}.
+  </p>
+  @if (distribution().truncated || distribution().approximate) {
+    <p class="mt-1 text-[11px] leading-5 text-muted">
+      Documentos em outros valores:
+      {{ number(distribution().other) }}. Erro superior da contagem:
+      {{ number(distribution().countError) }}.
+    </p>
+  }
+</section>

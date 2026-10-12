@@ -1,0 +1,231 @@
+<section
+  [id]="sectionId()"
+  tabindex="-1"
+  [attr.aria-labelledby]="idPrefix() + '-title'"
+  [attr.aria-busy]="loading()"
+  class="mt-12 min-w-0 scroll-mt-6 border-t border-line pt-8 outline-none"
+>
+  <div class="flex flex-wrap items-start justify-between gap-3">
+    <div class="min-w-0">
+      <h2
+        [id]="idPrefix() + '-title'"
+        class="text-xl font-semibold tracking-tight"
+      >
+        Publicações do mesmo processo
+      </h2>
+      <p class="mt-2 text-sm leading-6 text-muted">
+        Linha do tempo da mais antiga à mais recente. Publicações sem data ficam
+        ao final.
+      </p>
+    </div>
+    @if (report(); as report) {
+      @if (
+        report.selectedProcess &&
+        report.selectedProcess === selectedProcess() &&
+        (!loading() || publications().length)
+      ) {
+        <p class="text-xs leading-6 text-muted">
+          {{ number(publications().length) }}
+          {{
+            publications().length === 1
+              ? "publicação exibida"
+              : "publicações exibidas"
+          }}
+        </p>
+      }
+    }
+  </div>
+  @if (report(); as report) {
+    @if (report.processes.length > 1) {
+      <div class="mt-5 min-w-0">
+        <label
+          [for]="idPrefix() + '-process'"
+          class="block text-xs font-medium text-muted"
+          >Escolha o processo vinculado à publicação</label
+        >
+        <select
+          [id]="idPrefix() + '-process'"
+          [value]="selectedProcess() ?? ''"
+          (change)="select($event)"
+          class="mt-2 min-h-11 max-w-full rounded-lg border border-line bg-white px-3 text-sm font-medium text-ink"
+        >
+          @for (cnj of report.processes; track cnj) {
+            <option [value]="cnj">{{ processNumber(cnj) }}</option>
+          }
+        </select>
+      </div>
+    } @else if (report.selectedProcess) {
+      <p
+        class="mt-4 break-words text-sm font-medium text-brand-700 [overflow-wrap:anywhere]"
+      >
+        {{
+          report.processLinkPolicy === "comunica_v2_legacy_metadata"
+            ? "Processo informado pela fonte"
+            : "Processo"
+        }}
+        {{ processNumber(report.selectedProcess) }}
+      </p>
+    }
+    @if (!report.processes.length && !loading()) {
+      <p class="py-6 text-sm leading-6 text-muted">
+        Não há um número de processo com vínculo confirmado para montar esta
+        linha do tempo.
+      </p>
+    }
+  }
+  @if (error(); as error) {
+    <div class="mt-5 text-sm" role="alert">
+      <p class="font-medium">Não foi possível carregar a linha do tempo.</p>
+      <p class="mt-1 leading-6 text-muted">{{ error.message }}</p>
+      <button
+        type="button"
+        (click)="retry.emit()"
+        [disabled]="loading()"
+        class="mt-2 min-h-11 font-medium text-brand-700 hover:underline disabled:opacity-50"
+      >
+        Tentar novamente
+      </button>
+    </div>
+  }
+  @if (loading() && !publications().length) {
+    <p class="py-6 text-sm text-muted" role="status">
+      Carregando publicações do processo…
+    </p>
+  }
+  @if (
+    !loading() &&
+    !error() &&
+    report()?.selectedProcess &&
+    !publications().length
+  ) {
+    <p class="py-6 text-sm leading-6 text-muted">
+      Nenhuma publicação disponível para este processo neste momento.
+    </p>
+  }
+  @if (publications().length) {
+    <ol class="mt-7 min-w-0" aria-label="Linha do tempo das publicações">
+      @for (publication of publications(); track publication.id) {
+        <li
+          class="timeline-entry relative min-w-0 border-l border-line pb-7 pl-6 last:pb-0 sm:pl-8"
+        >
+          <span
+            class="absolute -left-1.5 top-6 size-3 rounded-full border-2 border-white"
+            [class.bg-line]="publication.id !== currentPublication()"
+            [class.bg-brand-500]="publication.id === currentPublication()"
+            aria-hidden="true"
+          ></span>
+          <article
+            [id]="itemId(publication.id)"
+            tabindex="-1"
+            class="min-w-0 rounded-lg p-4 focus:outline-none focus:ring-2 focus:ring-brand-500"
+            [class.bg-brand-50]="publication.id === currentPublication()"
+            [attr.aria-current]="
+              publication.id === currentPublication() ? 'true' : null
+            "
+          >
+            @if (publication.publicationDate) {
+              <time
+                [attr.datetime]="publication.publicationDate"
+                class="text-sm font-semibold text-ink"
+                >{{ civilDate(publication.publicationDate) }}</time
+              >
+            } @else {
+              @if (
+                $first || publications()[$index - 1]?.publicationDate !== null
+              ) {
+                <p class="mb-3 text-xs font-medium text-muted">
+                  Sem data de publicação · fora da ordem cronológica
+                </p>
+              }
+              <p class="text-sm font-semibold text-muted">
+                Data de publicação não informada
+              </p>
+            }
+            <div
+              class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted"
+            >
+              <span>{{ publication.court ?? "Tribunal não informado" }}</span>
+              <span>{{ publication.type ?? "Tipo não informado" }}</span>
+              @if (publication.id === currentPublication()) {
+                <span class="font-semibold text-brand-700"
+                  >Você está nesta publicação</span
+                >
+              }
+            </div>
+            @if (excerpt(publication); as snippet) {
+              <p
+                class="mt-3 line-clamp-3 text-sm leading-6 text-ink [overflow-wrap:anywhere]"
+              >
+                {{ snippet }}
+              </p>
+            }
+            @if (publication.id !== currentPublication()) {
+              <a
+                [routerLink]="['/publicacoes', publication.id]"
+                [queryParams]="queryParams()"
+                class="mt-3 inline-flex min-h-10 items-center gap-2 text-sm font-medium text-brand-700 hover:underline"
+                [attr.aria-label]="
+                  'Abrir publicação ' +
+                  publication.id +
+                  (publication.publicationDate
+                    ? ' de ' + civilDate(publication.publicationDate)
+                    : ' sem data de publicação')
+                "
+                >Abrir publicação <span aria-hidden="true">→</span></a
+              >
+            }
+          </article>
+        </li>
+      }
+    </ol>
+  }
+  @if (report()?.hasMore && !error()) {
+    <button
+      type="button"
+      [disabled]="loading()"
+      (click)="loadMore.emit()"
+      class="mt-6 min-h-11 rounded-lg border border-brand-600 px-5 py-2 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-50 disabled:opacity-50"
+    >
+      {{ loading() ? "Carregando…" : "Carregar mais publicações" }}
+    </button>
+  }
+  @if (report()?.truncated) {
+    <p class="mt-5 text-sm leading-6 text-muted">
+      Lista parcial: há publicações além do limite desta consulta.
+    </p>
+  }
+  @if (report()?.selectedProcess) {
+    <p class="mt-6 text-xs leading-6 text-muted">
+      Mostra as publicações disponíveis no acervo. Esta lista não representa o
+      andamento oficial completo do processo.
+    </p>
+    <details class="mt-3 text-xs text-muted">
+      <summary class="w-fit cursor-pointer font-medium hover:text-brand-700">
+        Sobre esta linha do tempo
+      </summary>
+      @if (report()?.processLinkPolicy === "comunica_v2_legacy_metadata") {
+        <p class="mt-2 leading-6">
+          O número do processo foi informado pela fonte Comunica. O vínculo é
+          lido de um formato legado reconhecido, sem alterar os registros.
+        </p>
+      }
+      <p class="mt-2 leading-6">
+        A consulta encontrou
+        {{ report()?.total?.relation === "gte" ? "pelo menos " : ""
+        }}{{ number(report()?.total?.value ?? 0) }} candidatas no acervo. Itens
+        sem vínculo confirmado ou que perderam acesso são removidos antes da
+        exibição.
+      </p>
+      <p class="mt-2 leading-6">
+        Os itens usam a data de publicação informada na fonte. Cada consulta
+        verifica os dados disponíveis naquele momento; a lista pode mudar entre
+        cargas.
+      </p>
+      @for (warning of report()?.warnings ?? []; track $index) {
+        <p class="mt-2 break-words leading-6 [overflow-wrap:anywhere]">
+          {{ warning }}
+        </p>
+      }
+    </details>
+  }
+</section>

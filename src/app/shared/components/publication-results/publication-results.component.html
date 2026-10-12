@@ -1,0 +1,176 @@
+<div
+  class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-line pb-4 text-sm"
+>
+  <p aria-live="polite">
+    @if (page(); as page) {
+      <strong class="font-semibold"
+        >{{ page.totalRelation === "gte" ? "Pelo menos " : ""
+        }}{{ number(page.total) }}</strong
+      >
+      publicações
+      @if (snapshotKind() === "pit") {
+        <span class="ml-1 hidden text-xs text-muted sm:inline"
+          >· {{ page.duration }} ms</span
+        >
+      }
+    } @else {
+      <span class="text-muted">{{
+        loading() ? "Consultando publicações…" : "Pesquisa de publicações"
+      }}</span>
+    }
+  </p>
+  <div class="flex items-center gap-3 text-xs text-muted">
+    <label class="sr-only" for="size">Publicações por página</label>
+    <select
+      class="min-h-9 max-w-32 rounded-md bg-transparent pr-2 text-ink"
+      id="size"
+      [value]="pageSize()"
+      (change)="changeSize($event)"
+    >
+      <option [value]="2">2 por página</option>
+      <option [value]="10">10 por página</option>
+      <option [value]="25">25 por página</option>
+      <option [value]="50">50 por página</option>
+    </select>
+    <label class="sr-only" for="sort">Ordenar resultados</label>
+    <select
+      class="min-h-9 max-w-40 rounded-md bg-transparent pr-2 text-ink"
+      id="sort"
+      [value]="sort()"
+      (change)="changeSort($event)"
+    >
+      <option value="relevance">Relevância</option>
+      <option value="date_desc">Data mais recente</option>
+    </select>
+  </div>
+</div>
+@if (loading()) {
+  <div class="py-10" role="status">
+    <p class="text-sm text-muted">Consultando o acervo…</p>
+    <div class="mt-5 space-y-3 motion-safe:animate-pulse" aria-hidden="true">
+      <div class="h-3 w-1/4 rounded bg-slate-100"></div>
+      <div class="h-5 w-3/4 rounded bg-slate-100"></div>
+      <div class="h-3 w-full rounded bg-slate-100"></div>
+      <div class="h-3 w-5/6 rounded bg-slate-100"></div>
+    </div>
+  </div>
+}
+@if (page(); as page) {
+  @if (!page.publications.length && !loading()) {
+    <div class="flex flex-col items-start py-12">
+      <svg
+        class="mb-4 size-10 text-muted"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.4"
+        aria-hidden="true"
+      >
+        <circle cx="10.5" cy="10.5" r="6.5" />
+        <path d="m16 16 5 5M8 10.5h5" />
+      </svg>
+      <h2 class="text-xl font-semibold">Nenhum resultado neste recorte</h2>
+      <p class="mt-2 text-sm text-muted">
+        Altere o texto ou os filtros para ampliar a pesquisa.
+      </p>
+    </div>
+  }
+  @for (publication of page.publications; track publication.id) {
+    <app-publication-summary
+      [publication]="publication"
+      [queryParams]="queryParams()"
+    />
+  }
+  <nav
+    class="flex items-center justify-between gap-3 py-6 text-sm"
+    aria-label="Paginação de resultados"
+  >
+    <button
+      class="min-h-10 rounded-lg border border-line px-4 font-medium text-brand-700 transition-colors hover:bg-brand-50 disabled:opacity-40"
+      type="button"
+      (click)="previous.emit()"
+      [disabled]="!hasPrevious() || loading()"
+    >
+      ← Anterior</button
+    ><span class="text-xs text-muted">Página {{ pageNumber() }}</span
+    ><button
+      class="min-h-10 rounded-lg border border-line px-4 font-medium text-brand-700 transition-colors hover:bg-brand-50 disabled:opacity-40"
+      type="button"
+      (click)="next.emit()"
+      [disabled]="!page.nextCursor || loading()"
+    >
+      Próxima →
+    </button>
+  </nav>
+  <details class="border-t border-line py-4 text-xs leading-6 text-muted">
+    <summary class="font-medium text-brand-700">Sobre estes resultados</summary>
+    <div class="mt-3 space-y-2">
+      <p>
+        Estratégia: {{ page.strategy }}. Pontuação de relevância não representa
+        probabilidade de correção jurídica.
+      </p>
+      @if (snapshotKind() === "pit") {
+        <p>
+          Voltar à primeira página reabre o recorte em uma nova sessão para
+          revalidar acesso.
+        </p>
+        <p>
+          A busca mantém um retrato da projeção; os resultados são revalidados
+          na projeção atual. As contagens permanecem vinculadas ao retrato da
+          sessão.
+        </p>
+      } @else if (snapshotKind() === "report") {
+        <p>
+          As contagens representam o recorte observado na análise. A paginação
+          reutiliza o relatório por até dois minutos e revalida acesso e seleção
+          dos documentos exibidos. Consulte novamente para atualizar os
+          gráficos.
+        </p>
+      } @else {
+        <p>
+          Cada página recalcula o recorte e revalida as publicações na projeção
+          atual. Lista e gráficos vêm da mesma consulta; os dados podem mudar
+          entre consultas.
+        </p>
+      }
+      @for (warning of page.warnings; track $index) {
+        <p>{{ warning }}</p>
+      }
+    </div>
+  </details>
+}
+@if (facets().length) {
+  <details
+    class="border-t border-line py-4 text-xs leading-6 text-muted"
+    aria-label="Facetas do recorte"
+  >
+    <summary class="font-medium text-brand-700">
+      Distribuição dos filtros neste recorte
+    </summary>
+    <div class="mt-3 space-y-3">
+      @for (facet of facets(); track facet.field) {
+        <div>
+          <h3 class="font-medium text-ink">
+            {{ fieldLabels[facet.field] }}
+          </h3>
+          <p>
+            Ausentes: {{ number(facet.missing) }} ·
+            {{ facet.truncated ? "Lista truncada" : "Valores exibidos"
+            }}{{ facet.approximate ? " · Contagens aproximadas" : "" }}
+          </p>
+          @if (facet.truncated || facet.approximate) {
+            <p>
+              Outros documentos: {{ number(facet.other) }} · erro superior de
+              contagem: {{ number(facet.countError) }}
+            </p>
+          }
+        </div>
+      }
+    </div>
+  </details>
+}
+@if (facetError(); as error) {
+  <p class="py-4 text-xs text-muted" role="status">
+    Facetas indisponíveis: {{ error.message }}
+  </p>
+}

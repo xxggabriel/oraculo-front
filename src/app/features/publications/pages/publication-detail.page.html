@@ -1,0 +1,150 @@
+<div class="detail-page mx-auto w-full max-w-6xl py-6 sm:py-8">
+  <a
+    class="back-link inline-flex items-center gap-2 text-sm font-medium text-brand-700 hover:underline"
+    [routerLink]="returnRoute()"
+    [queryParams]="route.snapshot.queryParams"
+    ><span aria-hidden="true">←</span> {{ returnRoute() === '/jurimetria' ?
+    'Voltar à jurimetria' : 'Voltar à pesquisa' }}</a
+  >
+  @if (loading()) {
+  <p class="py-12 text-sm text-muted" role="status">Carregando publicação…</p>
+  } @if (error(); as error) {
+  <section class="min-w-0 py-12" role="alert">
+    <h1 class="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
+      {{ error.code === "NOT_FOUND" ? "Publicação indisponível" : "Não foi
+      possível carregar a publicação" }}
+    </h1>
+    <p class="mt-3 text-sm leading-6 text-muted">{{ error.message }}</p>
+    @if (error.requestId) {
+    <p class="mt-2 break-all text-xs text-muted">
+      Requisição: {{ error.requestId }}
+    </p>
+    }
+    <button
+      type="button"
+      class="mt-5 rounded-lg border border-brand-600 px-4 py-2 text-sm font-semibold text-brand-700 transition-colors hover:bg-brand-50"
+      (click)="retry()"
+    >
+      Tentar novamente
+    </button>
+  </section>
+  } @if (detail(); as d) {
+  <section class="detail-heading mt-7 min-w-0 border-b border-line pb-6">
+    <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+      <span class="font-semibold text-brand-700">
+        {{ d.publication.court ?? "Tribunal não informado" }}
+      </span>
+      <span aria-hidden="true">·</span>
+      <span
+        >{{ d.metadata?.documentType ?? d.publication.type ?? "Tipo não
+        informado" }}</span
+      >
+    </p>
+    <h1
+      id="publication-heading"
+      tabindex="-1"
+      class="mt-3 break-words text-2xl font-semibold leading-tight tracking-tight text-ink [overflow-wrap:anywhere] sm:text-3xl"
+    >
+      {{ d.publication.processes.length ?
+      processNumber(d.publication.processes[0]) : "Publicação" }}
+    </h1>
+    <p class="mt-2 break-all text-xs leading-5 text-muted">
+      Identificador: {{ d.publication.id }}
+    </p>
+    <dl class="mt-6 flex flex-wrap gap-x-8 gap-y-4 text-sm">
+      <div>
+        <dt class="text-xs text-muted">Publicação</dt>
+        <dd class="mt-1 font-medium text-ink">
+          {{ civilDate(d.publication.publicationDate) }}
+        </dd>
+      </div>
+      <div>
+        <dt class="text-xs text-muted">Disponibilização</dt>
+        <dd class="mt-1 font-medium text-ink">
+          {{ civilDate(d.publication.availabilityDate) }}
+        </dd>
+      </div>
+      <div>
+        <dt class="text-xs text-muted">Data da fonte (aquisição)</dt>
+        <dd class="mt-1 font-medium text-ink">
+          {{ civilDate(d.publication.sourceDate) }}
+        </dd>
+      </div>
+    </dl>
+    <app-publication-metadata [metadata]="d.metadata" />
+  </section>
+
+  <nav
+    aria-label="Seções da publicação"
+    class="flex flex-wrap gap-x-6 gap-y-3 border-b border-line py-4 text-sm font-medium text-brand-700"
+  >
+    <a [href]="sectionHref('texto-publicacao')" class="hover:underline"
+      >Texto da publicação</a
+    >
+    <a [href]="sectionHref('outputs-selecionados')" class="hover:underline"
+      >Atos e classificações</a
+    >
+    <a [href]="sectionHref('referencias-publicacao')" class="hover:underline"
+      >Referências</a
+    >
+    <a [href]="sectionHref('proveniencia-publicacao')" class="hover:underline"
+      >Proveniência</a
+    >
+    <a [href]="sectionHref('timeline-publications')" class="hover:underline"
+      >Linha do tempo</a
+    >
+    <a [href]="sectionHref('related-publications')" class="hover:underline"
+      >Relacionadas</a
+    >
+  </nav>
+
+  <div
+    class="detail-grid grid min-w-0 gap-10 pt-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-10"
+  >
+    <div class="min-w-0">
+      <app-publication-text
+        [text]="d.text"
+        [identity]="d.publication"
+        [references]="d.references"
+        [baseHref]="baseHref()"
+        (anchorActivated)="navigateTo($event)"
+      />
+    </div>
+    <app-publication-provenance
+      [publication]="d.publication"
+      [source]="d.source"
+      [warnings]="d.warnings"
+    />
+  </div>
+  <app-publication-timeline
+    [report]="timeline.report()"
+    [publications]="timeline.publications()"
+    [currentPublication]="d.publication.id"
+    [selectedProcess]="timeline.selectedProcess()"
+    [loading]="timeline.loading()"
+    [error]="timeline.error()"
+    [queryParams]="route.snapshot.queryParams"
+    (selectProcess)="timeline.select($event)"
+    (loadMore)="moreTimeline()"
+    (retry)="retryTimeline()"
+  />
+  <app-related-publications
+    [items]="related()?.items ?? []"
+    [loading]="relatedLoading()"
+    [error]="relatedError()"
+    [queryParams]="route.snapshot.queryParams"
+    (retry)="retryRelated()"
+  />
+
+  <app-selected-outputs [outputs]="d.outputs" />
+  <app-publication-references
+    [references]="d.references"
+    [text]="d.text"
+    [identity]="d.publication"
+    [baseHref]="baseHref()"
+    [activeReference]="activeReference()"
+    [sourceAnchor]="sourceAnchor()"
+    (anchorActivated)="navigateTo($event)"
+  />
+  }
+</div>

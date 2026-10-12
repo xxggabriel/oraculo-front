@@ -1,0 +1,65 @@
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <div
+    class="flex items-center gap-2 rounded-full border border-transparent bg-surface p-1.5 pr-2 transition-colors focus-within:border-brand-500 focus-within:bg-white sm:gap-3 sm:p-2 sm:pl-5"
+  >
+    <svg
+      class="ml-3 size-5 shrink-0 text-muted sm:ml-0"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      aria-hidden="true"
+    >
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="m16 16 5 5" />
+    </svg>
+    <label class="sr-only" for="query">Texto da pesquisa</label>
+    <input
+      class="h-12 min-w-0 flex-1 bg-transparent px-1 text-sm text-ink outline-none placeholder:text-muted focus-visible:outline-none sm:text-base"
+      id="query"
+      formControlName="q"
+      maxlength="256"
+      placeholder="Busque por assunto, frase ou número CNJ"
+      autocomplete="off"
+    />
+    <button
+      class="flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-brand-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-50 sm:px-6"
+      type="submit"
+      [disabled]="loading()"
+    >
+      <svg
+        class="size-4 sm:hidden"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <circle cx="10.5" cy="10.5" r="6.5" />
+        <path d="m16 16 5 5" />
+      </svg>
+      <span class="sr-only sm:not-sr-only">{{
+        loading() ? "Pesquisando…" : "Pesquisar"
+      }}</span>
+    </button>
+  </div>
+  <div
+    class="mb-5 mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted sm:mb-7"
+  >
+    <label for="mode">Modo de busca</label>
+    <select
+      class="min-h-9 rounded-md bg-transparent pr-3 font-medium text-ink"
+      id="mode"
+      formControlName="mode"
+    >
+      <option value="auto">Automático</option>
+      <option value="lexical">Palavras</option>
+      <option value="phrase">Frase exata</option>
+      <option value="cnj">Número CNJ</option>
+    </select>
+    <span class="hidden border-l border-line pl-3 md:inline"
+      >Texto vazio consulta o recorte. CNJ completo tem prioridade no modo
+      automático.</span
+    >
+  </div>
+</form>

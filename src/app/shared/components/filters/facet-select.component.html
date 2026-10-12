@@ -1,0 +1,102 @@
+<fieldset [disabled]="!available()">
+  <legend class="mb-2 text-sm font-semibold">
+    {{ label() }}
+    @if (selected().length) {
+      <span class="ml-1 text-xs font-normal text-muted"
+        >{{ selected().length }} selecionado(s)</span
+      >
+    }
+  </legend>
+  @if (!available()) {
+    <p class="text-xs leading-5 text-muted">
+      Filtro indisponível neste acervo.
+    </p>
+  } @else {
+    <label class="sr-only" [for]="fieldId()"
+      >Buscar {{ label().toLocaleLowerCase("pt-BR") }}</label
+    >
+    <input
+      class="h-10 w-full min-w-0 rounded-lg border border-line bg-white px-3 text-sm placeholder:text-muted/80"
+      [id]="fieldId()"
+      type="search"
+      [value]="search()"
+      (input)="changeSearch($event)"
+      [placeholder]="'Buscar ' + label().toLocaleLowerCase('pt-BR')"
+      autocomplete="off"
+      [attr.aria-describedby]="fieldId() + '-help'"
+    />
+    @if (selected().length) {
+      <div
+        class="mt-2 flex flex-wrap gap-1.5"
+        [attr.aria-label]="label() + ' selecionados'"
+      >
+        @for (value of selected(); track value) {
+          <button
+            class="max-w-full break-words rounded-full bg-brand-50 px-2.5 py-1 text-xs text-brand-700"
+            type="button"
+            (click)="toggle(value)"
+            [attr.aria-label]="'Desmarcar ' + value"
+          >
+            {{ value }} <span aria-hidden="true">×</span>
+          </button>
+        }
+      </div>
+    }
+    <div class="mt-2 max-h-56 space-y-0.5 overflow-y-auto pr-1">
+      @for (option of visible(); track option.value) {
+        <label
+          class="flex min-h-10 cursor-pointer items-start gap-2 rounded-md px-1 py-2 text-sm hover:bg-surface"
+        >
+          <input
+            class="mt-0.5 size-4 shrink-0 rounded accent-brand-600"
+            #optionInput
+            [value]="option.value"
+            type="checkbox"
+            [checked]="selected().includes(option.value)"
+            (change)="toggle(option.value)"
+          />
+          <span class="min-w-0 flex-1 break-words"
+            >{{ option.value }}
+            @if (option.count === null) {
+              <small class="mt-0.5 block text-[10px] text-muted"
+                >Sem contagem neste recorte</small
+              >
+            }
+          </span>
+          @if (option.count !== null) {
+            <span class="text-xs tabular-nums text-muted">{{
+              number(option.count)
+            }}</span>
+          }
+        </label>
+      } @empty {
+        <p class="py-3 text-xs leading-5 text-muted">
+          {{
+            search()
+              ? "Nenhuma opção corresponde à busca."
+              : "Sem opções informadas pelas facetas deste contexto."
+          }}
+        </p>
+      }
+    </div>
+    @if (options().length > limit()) {
+      <button
+        class="mt-2 min-h-9 text-xs font-medium text-brand-700 hover:underline"
+        type="button"
+        (click)="limit.set(limit() + 20)"
+      >
+        Mostrar mais ({{ options().length - limit() }})
+      </button>
+    }
+    <p class="mt-2 text-[10px] leading-4 text-muted" [id]="fieldId() + '-help'">
+      Opções observadas nesta pesquisa. Contagens do recorte aplicado.
+      @if (distribution()?.truncated) {
+        A lista da faceta é truncada; outros valores podem não estar
+        disponíveis.
+      }
+      @if (distribution()?.approximate) {
+        Contagens aproximadas.
+      }
+    </p>
+  }
+</fieldset>

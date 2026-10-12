@@ -1,0 +1,230 @@
+<section
+  [id]="sectionAnchor('referencias-publicacao')"
+  tabindex="-1"
+  class="detail-section mt-10 min-w-0 scroll-mt-24 border-t border-line pt-7"
+  [attr.aria-labelledby]="sectionAnchor('titulo-referencias')"
+>
+  <div class="flex flex-wrap items-baseline justify-between gap-2">
+    <h2
+      [id]="sectionAnchor('titulo-referencias')"
+      class="text-lg font-semibold tracking-tight text-ink"
+    >
+      Referências jurisprudenciais & normativas
+    </h2>
+    @if (uniqueReferences().length) {
+      <span class="text-xs text-muted"
+        >{{ uniqueReferences().length }}
+        {{
+          uniqueReferences().length === 1 ? "referência" : "referências"
+        }}</span
+      >
+    }
+  </div>
+  <p class="mt-2 text-sm leading-6 text-muted">
+    Entenda o que foi mencionado e veja onde aparece no texto. A revisão da
+    extração não confirma a aplicação da referência ao caso nem a vigência de
+    uma norma.
+  </p>
+  @if (!uniqueReferences().length) {
+    <p class="py-6 text-sm leading-6 text-muted">
+      Nenhuma referência disponível e compatível com esta revisão.
+    </p>
+  }
+  <div class="mt-6 space-y-5">
+    @for (reference of uniqueReferences(); track referenceAnchor(reference)) {
+      @let view = presentation(reference);
+      @let excerpt = context(reference);
+      <article
+        class="reference-row min-w-0 scroll-mt-24 rounded-xl border border-line p-5 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 sm:p-6"
+        tabindex="-1"
+        [id]="referenceAnchor(reference)"
+        [attr.aria-labelledby]="referenceAnchor(reference) + '-title'"
+        [class.bg-brand-50]="activeReference() === referenceAnchor(reference)"
+        [class.border-brand-500]="
+          activeReference() === referenceAnchor(reference)
+        "
+      >
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div
+            class="flex min-w-0 items-center gap-2 text-xs font-medium text-brand-700"
+          >
+            <svg
+              class="size-4 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.6"
+              aria-hidden="true"
+            >
+              @if (view.normative) {
+                <path
+                  d="M6 3h11a2 2 0 0 1 2 2v16H7a3 3 0 0 1-3-3V5a2 2 0 0 1 2-2Z"
+                />
+                <path d="M4 17h15M8 7h7M8 11h7" />
+              } @else {
+                <path d="m3 9 9-6 9 6H3ZM5 10v8m7-8v8m7-8v8M3 21h18M3 18h18" />
+              }
+            </svg>
+            {{ view.category }}
+          </div>
+          <span
+            class="review-state inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium"
+            [class.bg-amber-50]="reference.reviewStatus !== 'validated'"
+            [class.text-amber-800]="reference.reviewStatus !== 'validated'"
+            [class.bg-brand-100]="reference.reviewStatus === 'validated'"
+            [class.text-brand-700]="reference.reviewStatus === 'validated'"
+            >{{ view.review.label }}</span
+          >
+        </div>
+        <h3
+          [id]="referenceAnchor(reference) + '-title'"
+          class="mt-3 break-words text-lg font-semibold leading-7 text-ink [overflow-wrap:anywhere]"
+        >
+          {{ view.title }}
+        </h3>
+        <p class="mt-1 text-xs font-medium text-muted">{{ view.type.label }}</p>
+        <p class="mt-2 text-sm leading-6 text-muted">
+          {{ view.type.explanation }}
+        </p>
+
+        <div class="mt-5 grid gap-4 border-t border-line pt-4 sm:grid-cols-2">
+          <div class="min-w-0">
+            <p class="text-xs font-medium text-muted">{{ view.originLabel }}</p>
+            <p
+              class="mt-1 break-words text-sm font-medium text-ink [overflow-wrap:anywhere]"
+            >
+              {{ view.origin }}
+            </p>
+            <p class="mt-1 text-xs leading-5 text-muted">
+              {{ view.attribution }}
+            </p>
+          </div>
+          <div class="min-w-0">
+            <p class="text-xs font-medium text-muted">O que foi confirmado</p>
+            <p class="mt-1 text-sm leading-6 text-ink">
+              {{ view.review.explanation }}
+            </p>
+            <p class="mt-1 text-xs leading-5 text-muted">
+              {{ view.resolution }}
+            </p>
+          </div>
+        </div>
+        @if (view.role) {
+          <p class="mt-3 text-xs leading-5 text-muted">
+            <span class="font-medium">Uso na publicação:</span> {{ view.role }}
+          </p>
+        }
+        @if (view.normative) {
+          <p class="mt-3 text-xs leading-5 text-muted">{{ view.legal }}.</p>
+        }
+
+        @if (excerpt) {
+          <div class="mt-5 min-w-0 rounded-lg bg-surface px-4 py-3">
+            <p class="text-xs font-medium text-muted">Trecho da publicação</p>
+            <blockquote
+              class="mt-2 break-words text-sm leading-7 text-ink [overflow-wrap:anywhere]"
+            >
+              @if (excerpt.leadingEllipsis) {
+                <span>…</span>
+              }
+              {{ excerpt.before
+              }}<mark class="rounded-sm bg-brand-100 px-0.5 text-brand-700">{{
+                excerpt.mention + (excerpt.mentionEllipsis ? "…" : "")
+              }}</mark
+              >{{ excerpt.after }}
+              @if (excerpt.trailingEllipsis) {
+                <span>…</span>
+              }
+            </blockquote>
+          </div>
+        } @else {
+          <p
+            class="mt-5 rounded-lg bg-surface px-4 py-3 text-xs leading-6 text-muted"
+          >
+            Não foi possível localizar esta menção no texto desta versão.
+            Consulte as evidências nos detalhes.
+          </p>
+        }
+        <div
+          class="mt-4 flex flex-wrap items-start justify-between gap-x-5 gap-y-3"
+        >
+          @if (backAnchor(reference); as anchor) {
+            <a
+              [href]="baseHref() + '#' + encodeFragment(anchor)"
+              (click)="navigate($event, anchor)"
+              class="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-brand-700 transition-colors hover:text-brand-600 hover:underline"
+            >
+              Ver no texto da publicação <span aria-hidden="true">↑</span>
+            </a>
+          }
+        </div>
+        <details
+          class="reference-audit mt-4 min-w-0 border-t border-line pt-4 text-sm"
+        >
+          <summary
+            class="w-fit cursor-pointer text-xs font-medium text-muted transition-colors hover:text-brand-700"
+          >
+            Detalhes da identificação e evidências
+          </summary>
+          <p class="mt-4 text-xs leading-6 text-muted">
+            Dados originais para conferir como a referência foi identificada. Os
+            códigos abaixo são identificadores do sistema.
+          </p>
+          <dl
+            class="mt-3 grid grid-cols-1 gap-x-6 gap-y-3 text-xs sm:grid-cols-2"
+          >
+            <div class="min-w-0 sm:col-span-2">
+              <dt class="text-muted">Texto citado completo</dt>
+              <dd
+                class="mt-1 whitespace-pre-wrap break-words leading-6 [overflow-wrap:anywhere]"
+              >
+                <app-publication-content [text]="reference.surface" />
+              </dd>
+            </div>
+            <div class="min-w-0 sm:col-span-2">
+              <dt class="text-muted">Identificador da referência</dt>
+              <dd class="mt-1 break-all font-mono leading-6">
+                {{ reference.key }}
+              </dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="text-muted">Tipo · código original</dt>
+              <dd class="mt-1 break-all">{{ reference.type }}</dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="text-muted">Revisão da extração · código original</dt>
+              <dd class="mt-1 break-all">{{ reference.reviewStatus }}</dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="text-muted">Origem · código original</dt>
+              <dd class="mt-1 break-all">
+                {{ reference.attributedEntity ?? "Não informada" }}
+              </dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="text-muted">Atribuição · código original</dt>
+              <dd class="mt-1 break-all">{{ reference.attributionStatus }}</dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="text-muted">Correspondência · código original</dt>
+              <dd class="mt-1 break-all">{{ reference.resolutionStatus }}</dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="text-muted">Uso na publicação · código original</dt>
+              <dd class="mt-1 break-all">
+                {{ reference.mentionRole ?? "Não determinado" }}
+              </dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="text-muted">Vigência · código original</dt>
+              <dd class="mt-1 break-all">
+                {{ reference.legalStatus ?? "Não informada" }}
+              </dd>
+            </div>
+          </dl>
+          <app-evidence-list [evidence]="reference.evidence" />
+        </details>
+      </article>
+    }
+  </div>
+</section>

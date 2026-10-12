@@ -1,0 +1,104 @@
+<section>
+  <h2 class="text-xl font-semibold tracking-tight">Distribuição do recorte</h2>
+  <p class="mt-2 text-sm leading-6 text-muted">
+    Os mesmos filtros da pesquisa, em uma consulta atual da projeção. Unidade:
+    publicação.
+  </p>
+  @if (loading()) {
+    <p class="py-8 text-sm text-muted" role="status">
+      Calculando distribuições…
+    </p>
+  }
+  @if (error(); as error) {
+    <p class="mt-4 text-sm text-red-700" role="alert">
+      {{ error.message }}
+    </p>
+  }
+  @if (analysis(); as analysis) {
+    <div class="population-number mt-6 border-b border-line pb-6">
+      <strong class="text-4xl font-semibold tracking-tight">{{
+        analysis.state === "no_population"
+          ? "Sem população"
+          : number(analysis.population)
+      }}</strong>
+      <p class="mt-2 text-sm text-muted">
+        {{
+          analysis.state === "no_population"
+            ? "Não há população para interpretar indicadores."
+            : "publicações públicas e ativas"
+        }}
+      </p>
+    </div>
+    <dl class="grid gap-3 border-b border-line py-4 text-xs sm:grid-cols-3">
+      <div>
+        <dt class="text-muted">Eixo temporal</dt>
+        <dd class="mt-1 font-medium">
+          {{ axisLabels[analysis.dateAxis] }}
+        </dd>
+      </div>
+      <div>
+        <dt class="text-muted">Excluídas por ausência de data</dt>
+        <dd class="mt-1 font-medium">
+          {{ number(analysis.excludedMissingDates) }}
+        </dd>
+      </div>
+      <div>
+        <dt class="text-muted">Observado em</dt>
+        <dd class="mt-1 break-all font-medium">
+          {{ analysis.observedAt }}
+        </dd>
+      </div>
+    </dl>
+    <div class="grid gap-x-8 sm:grid-cols-2">
+      @for (distribution of analysis.distributions; track distribution.field) {
+        <app-distribution-table
+          class="min-w-0"
+          [class.sm:col-span-2]="distribution.field === 'period'"
+          [distribution]="distribution"
+        />
+      }
+    </div>
+    <details class="border-t border-line py-4 text-xs leading-6 text-muted">
+      <summary class="font-medium text-brand-700">
+        População, seleção e interpretação
+      </summary>
+      <div class="mt-3 space-y-2">
+        <p>
+          Unidade: publicação. Denominador:
+          {{ number(analysis.denominator) }}. Numerador:
+          {{
+            analysis.numerator === null
+              ? "Não aplicável"
+              : number(analysis.numerator)
+          }}. Valor:
+          {{ analysis.value === null ? "Não aplicável" : analysis.value }}.
+        </p>
+        <p>
+          Revisão: {{ analysis.reviewPolicy }}. Seleção:
+          {{ analysis.selectionPolicy }}.
+        </p>
+        <p>
+          Dados ausentes preservam seu estado. Propostas não validadas não
+          compõem indicadores decisórios neste painel.
+        </p>
+        @for (warning of analysis.warnings; track $index) {
+          <p>{{ warning }}</p>
+        }
+      </div>
+    </details>
+  }
+  <div
+    class="mt-5 rounded-lg border border-line bg-surface p-5 text-sm leading-6"
+  >
+    <h3 class="font-semibold">Indicadores decisórios indisponíveis</h3>
+    <p class="mt-2 text-muted">
+      Taxas de resultado exigem seleção e denominador comprováveis sobre todo o
+      recorte. Este painel não estima êxito processual.
+    </p>
+    @for (feature of capabilities()?.features; track feature.name) {
+      @if (feature.name === "decisionMetrics" && !feature.available) {
+        <p class="mt-2 text-xs text-muted">{{ feature.reason }}</p>
+      }
+    }
+  </div>
+</section>

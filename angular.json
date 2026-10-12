@@ -1,0 +1,49 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "projects": {
+    "oraculo": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "src/main.ts",
+            "index": "src/index.html",
+            "tsConfig": "tsconfig.app.json",
+            "styles": ["src/styles.css"],
+            "outputPath": "dist/oraculo",
+            "budgets": [
+              {
+                "type": "initial",
+                "maximumWarning": "900kB",
+                "maximumError": "1MB"
+              }
+            ],
+            "allowedCommonJsDependencies": [
+              "ajv/dist/runtime/ucs2length.js",
+              "ajv-formats/dist/formats.js"
+            ]
+          },
+          "configurations": {
+            "development": {
+              "optimization": false,
+              "sourceMap": true
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "buildTarget": "oraculo:build:development"
+          }
+        }
+      }
+    }
+  },
+  "cli": {
+    "analytics": "0a92b69a-0c47-4765-9ab8-847ce36680de"
+  }
+}
